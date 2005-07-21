@@ -3,7 +3,7 @@
 	<name>Services_Webservice</name>
 	<summary>Create webservices</summary>
 	<description>
-	This package helps you to create webservices
+	Easy Webservice creation
 	</description>
 	<license>PHP License</license>
 	<maintainers>
@@ -15,7 +15,7 @@
 		</maintainer>
 	</maintainers>
 	<release>
-		<version>0.3</version>
+		<version>0.3.0</version>
 		<date>2005-07-15</date>
 		<state>alpha</state>
 		<notes>
