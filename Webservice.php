@@ -652,21 +652,22 @@ For more details on URIs, see <a href="http://www.ietf.org/rfc/rfc2396.txt"><acr
         }
 
         // array
-        foreach ($this->wsdlStruct['array'] as $source => $target) {
-            $complextype = $this->wsdl->createElement('s:complexType');
-            $complextype->setAttribute('name', $source);
-            $sequence = $this->wsdl->createElement('s:sequence');
-            $complextype->appendChild($sequence);
-            $schema->appendChild($complextype);
-            $element = $this->wsdl->createElement('s:element');
-            $element->setAttribute('minOccurs', '0');
-            $element->setAttribute('maxOccurs', 'unbounded');
-            $element->setAttribute('nillable', 'true');
-            $element->setAttribute('name', $target);
-            $element->setAttribute('type', ((in_array($target, $this->simpleTypes)) ? 's:' : 'tns:') . $target);
-            $sequence->appendChild($element);
+        if (isset($this->wsdlStruct['array'])){
+	    foreach ($this->wsdlStruct['array'] as $source => $target) {
+                $complextype = $this->wsdl->createElement('s:complexType');
+                $complextype->setAttribute('name', $source);
+                $sequence = $this->wsdl->createElement('s:sequence');
+                $complextype->appendChild($sequence);
+                $schema->appendChild($complextype);
+                $element = $this->wsdl->createElement('s:element');
+                $element->setAttribute('minOccurs', '0');
+                $element->setAttribute('maxOccurs', 'unbounded');
+                $element->setAttribute('nillable', 'true');
+                $element->setAttribute('name', $target);
+                $element->setAttribute('type', ((in_array($target, $this->simpleTypes)) ? 's:' : 'tns:') . $target);
+                $sequence->appendChild($element);
+            }
         }
-
         // class
         if (isset($this->wsdlStruct['class'])) {
             foreach ($this->wsdlStruct['class'] as $className=>$classProperty) {
