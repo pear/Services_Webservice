@@ -1,5 +1,8 @@
 <?php
 
+ini_set('error_reporting',E_ALL);
+ini_set('error_log','/var/www/error.log');
+
 /* vim: set expandtab tabstop=4 shiftwidth=4: */
 
 /**
@@ -81,7 +84,7 @@ abstract class Services_Webservice
     const SCHEMA_SOAP_HTTP       = 'http://schemas.xmlsoap.org/soap/http';
     const SCHEMA_SOAP            = 'http://schemas.xmlsoap.org/wsdl/soap/';
     const SCHEMA_WSDL            = 'http://schemas.xmlsoap.org/wsdl/';
-    const SCHEMA_WSDL_HTTP       = 'http://schemas.xmlsoap.org/wsdl/http';
+    const SCHEMA_WSDL_HTTP       = 'http://schemas.xmlsoap.org/wsdl/http/';
     const SCHEMA_DISCO           = 'http://schemas.xmlsoap.org/disco/';
     const SCHEMA_DISCO_SCL       = 'http://schemas.xmlsoap.org/disco/scl/';
     const SCHEMA_DISCO_SOAP      = 'http://schemas.xmlsoap.org/disco/soap/';
@@ -176,7 +179,7 @@ abstract class Services_Webservice
         if (isset($namespace) && $namespace != '') {
             $this->warningNamespace   = false;
             $this->errorDescription = false;
-            $namespace .= (substr($namespace, -1) == '/') ? '' : '/';
+            //$namespace .= (substr($namespace, -1) == '/') ? '' : '/';
         } else {
             $this->warningNamespace   = true;
             $this->errorDescription = true;
@@ -215,7 +218,7 @@ abstract class Services_Webservice
                 break;
             default:
                 $this->intoStruct();
-                if (!empty($HTTP_RAW_POST_DATA)) {
+                if (isset($_SERVER['HTTP_SOAPACTION'])) {
                     $this->createServer();
                 } else {
                     $this->handleINFO();
@@ -233,7 +236,7 @@ abstract class Services_Webservice
      */
     private function createServer()
     {
-        $server = new SoapServer(NULL, $this->soapServerOptions);
+        $server = new SoapServer(null, $this->soapServerOptions);
         $server->SetClass($this->classname);
         $server->handle();
     }
@@ -248,7 +251,7 @@ abstract class Services_Webservice
     private function handleWSDL()
     {
         header('Content-Type: text/xml');
-        $this->wsdl = new DOMDocument();
+        $this->wsdl = new DOMDocument('1.0' ,'utf-8');
         $this->createWSDL_definitions();
         $this->createWSDL_types();
         $this->createWSDL_messages();
@@ -268,7 +271,7 @@ abstract class Services_Webservice
     private function handleDISCO()
     {
         header('Content-Type: text/xml');
-        $this->disco = new DOMDocument();
+        $this->disco = new DOMDocument('1.0' ,'utf-8');
         $disco_discovery = $this->disco->createElement('discovery');
         $disco_discovery->setAttribute('xmlns:xsi', self::SOAP_XML_SCHEMA_INSTANCE);
         $disco_discovery->setAttribute('xmlns:xsd', self::SOAP_XML_SCHEMA_VERSION);
@@ -437,7 +440,6 @@ For more details on URIs, see <a href="http://www.ietf.org/rfc/rfc2396.txt"><acr
                     || ($var['class'] == 1 && $var['length'] > 0)) {
                     $_typensSource = '';
                     for ($i = $var['length']; $i > 0; --$i) {
-                        // 7 is strlen('ArrayOf')
                         $_typensSource .= 'ArrayOf';
                         $this->wsdlStruct['array'][$_typensSource . $var['type']] = substr($_typensSource, 0, strlen($_typensSource) - 7) . $var['type'];
                     }
@@ -486,7 +488,6 @@ For more details on URIs, see <a href="http://www.ietf.org/rfc/rfc2396.txt"><acr
                     if ($_length > 0) {
                         $_typensSource = '';
                         for ($j = $_length; $j > 0;  --$j) {
-                            // 7 = strlen('ArrayOf')
                             $_typensSource .= 'ArrayOf';
                             $this->wsdlStruct['array'][$_typensSource.$_cleanType] =
                                     substr($_typensSource, 0, strlen($_typensSource) - 7) . $_cleanType;
@@ -574,15 +575,31 @@ For more details on URIs, see <a href="http://www.ietf.org/rfc/rfc2396.txt"><acr
      */
     protected function createWSDL_definitions()
     {
-        $this->wsdl_definitions = $this->wsdl->createElement('wsdl:definitions');
+		/*
+		<definitions name="myService"
+		    targetNamespace="urn:myService"
+		    xmlns:typens="urn:myService"
+		    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+		    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+		    xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/"
+		    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+		    xmlns="http://schemas.xmlsoap.org/wsdl/">
+		*/
+		
+        $this->wsdl_definitions = $this->wsdl->createElement('definitions');
+        $this->wsdl_definitions->setAttribute('name', $this->classname);
+        $this->wsdl_definitions->setAttribute('targetNamespace', 'urn:'.$this->classname);
+        $this->wsdl_definitions->setAttribute('xmlns:typens', 'urn:'.$this->classname);
+        $this->wsdl_definitions->setAttribute('xmlns:xsd', self::SOAP_XML_SCHEMA_VERSION);
         $this->wsdl_definitions->setAttribute('xmlns:soap', self::SCHEMA_SOAP);
         $this->wsdl_definitions->setAttribute('xmlns:soapenc', self::SOAP_SCHEMA_ENCODING);
-        $this->wsdl_definitions->setAttribute('xmlns:mime', self::SOAP_XML_SCHEMA_MIME);
-        $this->wsdl_definitions->setAttribute('xmlns:tns', $this->namespace);
-        $this->wsdl_definitions->setAttribute('xmlns:s', self::SOAP_XML_SCHEMA_VERSION);
-        $this->wsdl_definitions->setAttribute('xmlns:http', self::SCHEMA_WSDL_HTTP);
-        $this->wsdl_definitions->setAttribute('targetNamespace', $this->namespace);
         $this->wsdl_definitions->setAttribute('xmlns:wsdl', self::SCHEMA_WSDL);
+        $this->wsdl_definitions->setAttribute('xmlns', self::SCHEMA_WSDL);
+        
+        //$this->wsdl_definitions->setAttribute('xmlns:mime', self::SOAP_XML_SCHEMA_MIME);
+        //$this->wsdl_definitions->setAttribute('xmlns:tns', $this->namespace);
+        //$this->wsdl_definitions->setAttribute('xmlns:http', self::SCHEMA_WSDL_HTTP);
+        
         $this->wsdl->appendChild($this->wsdl_definitions);
     }
 
@@ -595,93 +612,86 @@ For more details on URIs, see <a href="http://www.ietf.org/rfc/rfc2396.txt"><acr
      */
     protected function createWSDL_types()
     {
-        $types  = $this->wsdl->createElement('wsdl:types');
-        $schema = $this->wsdl->createElement('s:schema');
-        //$schema->setAttribute('xmlns', self::SOAP_XML_SCHEMA_VERSION);
-        $schema->setAttribute('elementFormDefault', 'qualified');
-        $schema->setAttribute('targetNamespace', $this->namespace);
+    	/*
+		<types>
+        	<xsd:schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:myService"/>
+        </types>
+    	*/
+        $types  = $this->wsdl->createElement('types');
+        $schema = $this->wsdl->createElement('xsd:schema');
+        $schema->setAttribute('xmlns', self::SOAP_XML_SCHEMA_VERSION );
+        $schema->setAttribute('targetNamespace', 'urn:'.$this->classname);
         $types->appendChild($schema);
 
-        // methods
-        foreach ($this->wsdlStruct[$this->classname]['method'] as $methodName=>$method) {
-            $methodIn  = false;
-            $methodOut = false;
-            foreach ($method['var'] as $methodVars) {
-                if (isset($methodVars['param'])) {
-                    if ($methodIn == false) {
-                        $methodIn = $this->wsdl->createElement('s:element');
-                        $methodIn->setAttribute('name', $methodName);
-                        $complextype = $this->wsdl->createElement('s:complexType');
-                        $sequence = $this->wsdl->createElement('s:sequence');
-                        $complextype->appendChild($sequence);
-                        $methodIn->appendChild($complextype);
-                        $schema->appendChild($methodIn);
-                    }
-                    $element = $this->wsdl->createElement('s:element');
-                    $element->setAttribute('minOccurs', '0');
-                    $element->setAttribute('maxOccurs', '1');
-                    $element->setAttribute('name', $methodVars['name']);
-                    $element->setAttribute('type', (($methodVars['array'] != 1 && $methodVars['class'] != 1)
-                        ? 's:' : 'tns:') . $methodVars['wsdltype']);
-                    $sequence->appendChild($element);
-                }
-
-                if (isset($methodVars['return'])) {
-                    if ($methodOut == false) {
-                        $methodOut = $this->wsdl->createElement('s:element');
-                        $methodOut->setAttribute('name', $methodName . 'Response');
-                        $complextype = $this->wsdl->createElement('s:complexType');
-                        if ($methodVars['type'] != 'void') {
-                            $sequence = $this->wsdl->createElement('s:sequence');
-                            $complextype->appendChild($sequence);
-                        }
-                        $methodOut->appendChild($complextype);
-                        $schema->appendChild($methodOut);
-                    }
-                    if ($methodVars['type'] != 'void') {
-                        $element = $this->wsdl->createElement('s:element');
-                        $element->setAttribute('minOccurs', '1');
-                        $element->setAttribute('maxOccurs', '1');
-                        $element->setAttribute('name', $methodName.'Response');
-                        $element->setAttribute('type', (($methodVars['array'] != 1 && $methodVars['class'] != 1)
-                            ? 's:' : 'tns:') . $methodVars['wsdltype']);
-                        $sequence->appendChild($element);
-                    }
-                }
-            }
-        }
-
         // array
-        if (isset($this->wsdlStruct['array'])){
-	    foreach ($this->wsdlStruct['array'] as $source => $target) {
-                $complextype = $this->wsdl->createElement('s:complexType');
-                $complextype->setAttribute('name', $source);
-                $sequence = $this->wsdl->createElement('s:sequence');
-                $complextype->appendChild($sequence);
-                $schema->appendChild($complextype);
-                $element = $this->wsdl->createElement('s:element');
-                $element->setAttribute('minOccurs', '0');
-                $element->setAttribute('maxOccurs', 'unbounded');
-                $element->setAttribute('nillable', 'true');
-                $element->setAttribute('name', $target);
-                $element->setAttribute('type', ((in_array($target, $this->simpleTypes)) ? 's:' : 'tns:') . $target);
-                $sequence->appendChild($element);
-            }
+        /*
+        <xsd:complexType name="ArrayOfclassC">
+            <xsd:complexContent>
+                <xsd:restriction base="soapenc:Array">
+                    <xsd:attribute ref="soapenc:arrayType" wsdl:arrayType="typens:classC[]"/>
+                </xsd:restriction>
+            </xsd:complexContent>
+        </xsd:complexType>
+        */
+        if (isset($this->wsdlStruct['array'])) {
+
+	        foreach ($this->wsdlStruct['array'] as $source => $target) {
+	        	
+	        	//<s:complexType name="ArrayOfArrayOfInt">
+				//<s:sequence>
+				//<s:element minOccurs="0" maxOccurs="unbounded" name="ArrayOfInt" nillable="true" type="tns:ArrayOfInt"/>
+				//</s:sequence>
+	        	
+	            $complexType 	= $this->wsdl->createElement('xsd:complexType');
+	            $complexContent = $this->wsdl->createElement('xsd:complexContent');
+	            $restriction 	= $this->wsdl->createElement('xsd:restriction');
+	            $attribute 		= $this->wsdl->createElement('xsd:attribute');
+	            $restriction->appendChild($attribute);
+	            $complexContent->appendChild($restriction);
+	            $complexType->appendChild($complexContent);
+	            $schema->appendChild($complexType);
+	            
+	            $complexType->setAttribute('name', $source);
+	            $restriction->setAttribute('base', 'soapenc:Array');
+	            $attribute->setAttribute('ref', 'soapenc:arrayType');
+
+	            try {
+	            	$class = new ReflectionClass($target);
+	            }catch (Exception $e){}
+	            
+	            if(in_array($target, $this->simpleTypes)){
+		            $attribute->setAttribute('wsdl:arrayType', 'xsd:'.$target.'[]');
+	            }elseif(isset($class)){
+		            $attribute->setAttribute('wsdl:arrayType', 'typens:'.$target.'[]');
+	            }else{
+		            $attribute->setAttribute('wsdl:arrayType', 'typens:'.$target.'[]');
+	            }
+	            unset($class);
+	            
+	        }
         }
+        
         // class
+        /*
+        <xsd:complexType name="classB">
+            <xsd:all>
+                <xsd:element name="classCArray" type="typens:ArrayOfclassC" />
+            </xsd:all>
+        </xsd:complexType>
+        */
         if (isset($this->wsdlStruct['class'])) {
             foreach ($this->wsdlStruct['class'] as $className=>$classProperty) {
-                $complextype = $this->wsdl->createElement('s:complexType');
+                $complextype = $this->wsdl->createElement('xsd:complexType');
                 $complextype->setAttribute('name', $className);
-                $sequence = $this->wsdl->createElement('s:sequence');
+                $sequence = $this->wsdl->createElement('xsd:all');
                 $complextype->appendChild($sequence);
                 $schema->appendChild($complextype);
                 foreach ($classProperty['property'] as $classPropertyName => $classPropertyValue) {
-                    $element = $this->wsdl->createElement('s:element');
-                    $element->setAttribute('minOccurs', '0');
-                    $element->setAttribute('maxOccurs', '1');
+                    $element = $this->wsdl->createElement('xsd:element');
                     $element->setAttribute('name', $classPropertyName);
-                    $element->setAttribute('type', ((in_array($classPropertyValue['wsdltype'], $this->simpleTypes)) ? 's:' : 'tns:') . $classPropertyValue['wsdltype']);
+                    $element->setAttribute('type', ((in_array($classPropertyValue['wsdltype'], $this->simpleTypes)) 
+                    										? 'xsd:' 
+                    										: 'typens:') . $classPropertyValue['wsdltype']);
                     $sequence->appendChild($element);
                 }
             }
@@ -699,25 +709,43 @@ For more details on URIs, see <a href="http://www.ietf.org/rfc/rfc2396.txt"><acr
      */
     protected function createWSDL_messages()
     {
-        foreach ($this->wsdlStruct[$this->classname]['method'] AS $methodName => $methodVars){
-            $messageInput = $this->wsdl->createElement('wsdl:message');
-            $messageInput->setAttribute('name', $methodName . 'SoapIn');
-            $messageOutput = $this->wsdl->createElement('wsdl:message');
-            $messageOutput->setAttribute('name', $methodName . 'SoapOut');
-            $partInput = $this->wsdl->createElement('wsdl:part');
-            $partInput->setAttribute('name', 'parameters');
-            $partInput->setAttribute('element', 'tns:' . $methodName);
-            $partOutput = $this->wsdl->createElement('wsdl:part');
-            $partOutput->setAttribute('name', 'parameters');
-            $partOutput->setAttribute('element', 'tns:' . $methodName . 'Response');
-            $messageInput->appendChild($partInput);
-            $messageOutput->appendChild($partOutput);
+    	/*
+	    <message name="hello">
+	        <part name="i" type="xsd:int"/>
+	        <part name="j" type="xsd:string"/>
+	    </message>
+	    <message name="helloResponse">
+	        <part name="helloResponse" type="xsd:string"/>
+	    </message>
+	    */
+        foreach ($this->wsdlStruct[$this->classname]['method'] AS $methodName => $method){
+            $messageInput = $this->wsdl->createElement('message');
+            $messageInput->setAttribute('name', $methodName);
+            $messageOutput = $this->wsdl->createElement('message');
+            $messageOutput->setAttribute('name', $methodName . 'Response');
             $this->wsdl_definitions->appendChild($messageInput);
             $this->wsdl_definitions->appendChild($messageOutput);
+
+            foreach ($method['var'] as $methodVars) {            	
+                if (isset($methodVars['param'])) {
+                    $part = $this->wsdl->createElement('part');
+                    $part->setAttribute('name', $methodVars['name']);
+                    $part->setAttribute('type', (($methodVars['array'] != 1 && $methodVars['class'] != 1)
+                        ? 'xsd:' : 'typens:') . $methodVars['wsdltype']);
+            		$messageInput->appendChild($part);
+                }
+                if (isset($methodVars['return'])) {
+                    $part = $this->wsdl->createElement('part');
+                    $part->setAttribute('name', $methodName.'Response'); //$methodVars['wsdltype']);
+                    $part->setAttribute('type', (($methodVars['array'] != 1 && $methodVars['class'] != 1)
+                        ? 'xsd:' : 'typens:') . $methodVars['wsdltype']);
+            		$messageOutput->appendChild($part);
+                }
+            }
         }
     }
 
-    // }}}
+	// }}}
     // {{{ createWSDL_binding()
     /**
      * Create the binding node
@@ -726,30 +754,47 @@ For more details on URIs, see <a href="http://www.ietf.org/rfc/rfc2396.txt"><acr
      */
     protected function createWSDL_binding()
     {
-        $binding = $this->wsdl->createElement('wsdl:binding');
-        $binding->setAttribute('name', $this->classname . 'Soap');
-        $binding->setAttribute('type', 'tns:' . $this->classname . 'Soap');
+    	/*
+	    <binding name="myServiceBinding" type="typens:myServicePort">    
+	        <soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+	            <operation name="hello">
+	                <soap:operation soapAction="urn:myServiceAction"/>
+					<input>
+					    <soap:body use="encoded" namespace="urn:myService" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+	                </input>
+	                <output>
+	                    <soap:body use="encoded" namespace="urn:myService" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+	                </output>
+	        </operation>
+	    </binding>
+	    */
+		$binding = $this->wsdl->createElement('binding');
+        $binding->setAttribute('name', $this->classname . 'Binding');
+        $binding->setAttribute('type', 'typens:' . $this->classname . 'Port');
         $soap_binding = $this->wsdl->createElement('soap:binding');
-        //$soap_binding->setAttribute('style', $this->bindingStyle);
+        $soap_binding->setAttribute('style', 'rpc');
         $soap_binding->setAttribute('transport', self::SCHEMA_SOAP_HTTP);
         $binding->appendChild($soap_binding);
         foreach ($this->wsdlStruct[$this->classname]['method'] AS $methodName => $methodVars) {
-            $operation = $this->wsdl->createElement('wsdl:operation');
+            $operation = $this->wsdl->createElement('operation');
             $operation->setAttribute('name', $methodName);
             $binding->appendChild($operation);
             $soap_operation = $this->wsdl->createElement('soap:operation');
-            $soap_operation->setAttribute('soapAction', $this->namespace.$methodName);
-            $soap_operation->setAttribute('style', 'document');
-            $operation->appendChild($soap_operation);
-            $input  = $this->wsdl->createElement('wsdl:input');
-            $output = $this->wsdl->createElement('wsdl:output');
+            $soap_operation->setAttribute('soapAction', 'urn:'.$this->classname.'Action');
+            $operation->appendChild($soap_operation);            
+            $input  = $this->wsdl->createElement('input');
+            $output = $this->wsdl->createElement('output');
             $operation->appendChild($input);
             $operation->appendChild($output);
             $soap_body = $this->wsdl->createElement('soap:body');
-            $soap_body->setAttribute('use', 'literal');
+            $soap_body->setAttribute('use', 'encoded');
+            $soap_body->setAttribute('namespace', 'urn:'.$this->namespace);
+            $soap_body->setAttribute('encodingStyle', self::SOAP_SCHEMA_ENCODING );
             $input->appendChild($soap_body);
             $soap_body = $this->wsdl->createElement('soap:body');
-            $soap_body->setAttribute('use', 'literal');
+            $soap_body->setAttribute('use', 'encoded');
+            $soap_body->setAttribute('namespace', 'urn:'.$this->namespace);
+            $soap_body->setAttribute('encodingStyle', self::SOAP_SCHEMA_ENCODING );
             $output->appendChild($soap_body);
         }
         $this->wsdl_definitions->appendChild($binding);
@@ -764,21 +809,29 @@ For more details on URIs, see <a href="http://www.ietf.org/rfc/rfc2396.txt"><acr
      */
     protected function createWSDL_portType()
     {
-        $portType = $this->wsdl->createElement('wsdl:portType');
-        $portType->setAttribute('name', $this->classname.'Soap');
+    	/*
+	    <portType name="myServicePort">
+	        <operation name="hello">
+	            <input message="typens:hello"/>
+	            <output message="typens:helloResponse"/>
+	        </operation>
+	    </portType>
+	    */
+        $portType = $this->wsdl->createElement('portType');
+        $portType->setAttribute('name', $this->classname.'Port');
         foreach ($this->wsdlStruct[$this->classname]['method'] AS $methodName => $methodVars) {
-            $operation = $this->wsdl->createElement('wsdl:operation');
+            $operation = $this->wsdl->createElement('operation');
             $operation->setAttribute('name', $methodName);
             $portType->appendChild($operation);
 
-            $documentation = $this->wsdl->createElement('wsdl:documentation');
+            $documentation = $this->wsdl->createElement('documentation');
             $documentation->appendChild($this->wsdl->createTextNode($methodVars['description']));
             $operation->appendChild($documentation);
 
-            $input  = $this->wsdl->createElement('wsdl:input');
-            $output = $this->wsdl->createElement('wsdl:output');
-            $input->setAttribute('message', 'tns:' . $methodName . 'SoapIn');
-            $output->setAttribute('message', 'tns:' . $methodName . 'SoapOut');
+            $input  = $this->wsdl->createElement('input');
+            $output = $this->wsdl->createElement('output');
+            $input->setAttribute('message', 'typens:' . $methodName );
+            $output->setAttribute('message', 'typens:' . $methodName . 'Response');
             $operation->appendChild($input);
             $operation->appendChild($output);
         }
@@ -794,11 +847,18 @@ For more details on URIs, see <a href="http://www.ietf.org/rfc/rfc2396.txt"><acr
      */
     protected function createWSDL_service()
     {
-        $service = $this->wsdl->createElement('wsdl:service');
+    	/*
+	    <service name="myService">
+	        <port name="myServicePort" binding="typens:myServiceBinding">
+	            <soap:address location="http://dschini.org/test1.php"/>
+	        </port>
+	    </service>
+        */
+        $service = $this->wsdl->createElement('service');
         $service->setAttribute('name', $this->classname);
-        $port = $this->wsdl->createElement('wsdl:port');
-        $port->setAttribute('name', $this->classname . 'Soap');
-        $port->setAttribute('binding', 'tns:' . $this->classname . 'Soap');
+        $port = $this->wsdl->createElement('port');
+        $port->setAttribute('name', $this->classname . 'Port');
+        $port->setAttribute('binding', 'typens:' . $this->classname . 'Binding');
         $adress = $this->wsdl->createElement('soap:address');
         $adress->setAttribute('location', $this->protocol . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF']);
         $port->appendChild($adress);
