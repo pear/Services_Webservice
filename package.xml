@@ -10,17 +10,28 @@
 		<maintainer>
 			<user>crafics</user>
 			<name>Manfred Weber</name>
-			<email>weber@mayflower.de</email>
+			<email>crafics@php.net</email>
 			<role>lead</role>
 		</maintainer>
+               <maintainer>
+                        <user>jausions</user>
+                        <name>Philippe Jausions</name>
+                        <email>Philippe.Jausions@11abacus.com</email>
+                        <role>developer</role>
+                </maintainer>
+               <maintainer>
+                        <user>mfonda</user>
+                        <name>Matthew Fonda</name>
+                        <email>mfonda@php.net</email>
+                        <role>developer</role>
+                </maintainer>
 	</maintainers>
 	<release>
-		<version>0.3.0</version>
-		<date>2005-07-15</date>
+		<version>0.4.0</version>
+		<date>2005-07-24</date>
 		<state>alpha</state>
 		<notes>
-- improved infopage
-- method descriptions support
+- new wsdl model
 		</notes>
 		<filelist>
 			<dir name="/" baseinstalldir="Services">  
