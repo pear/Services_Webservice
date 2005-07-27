@@ -19,6 +19,7 @@ ini_set('error_log','/var/www/error.log');
  * @category   Services
  * @package    Services_Webservice
  * @author     Manfred Weber <weber@mayflower.de>
+ * @author     Philippe Jausions <Philippe.Jausions@11abacus.com>
  * @copyright  2005 The PHP Group
  * @license    http://www.php.net/license/3_0.txt  PHP License 3.0
  * @version    CVS: $Id$
@@ -33,8 +34,9 @@ ini_set('error_log','/var/www/error.log');
  * The PEAR::Services_Webservice class creates web services from your classes
  *
  * @author  Manfred Weber <weber@mayflower.de>
+ * @author  Philippe Jausions <Philippe.Jausions@11abacus.com>
  * @package Services_Webservices
- * @version
+ * @version @version@
  */
 abstract class Services_Webservice
 {
@@ -94,7 +96,7 @@ abstract class Services_Webservice
             $namespace .= (substr($namespace, -1) == '/') ? '' : '/'; */
         }
         $this->namespace   = $namespace;
-        $this->description = (trim($description) != '') ? $description : 'my example service description';
+        $this->description = $description;
         $this->soapServerOptions = (is_array($options) && count($options) > 0) ? $options : array(
             'uri'      => $this->namespace,
             'encoding' => SOAP_ENCODED);
