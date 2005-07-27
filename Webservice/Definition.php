@@ -169,6 +169,8 @@ class Services_Webservice_Definition
             $this->namespace = 'http://example.org/';
         }
 
+        $this->description = $description;
+
         $this->_wsdlStruct = array();
         $this->_hiddenMethods = array(
             '__construct',
