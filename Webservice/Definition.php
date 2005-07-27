@@ -61,15 +61,6 @@ class Services_Webservice_Definition
      */
     public $protocol;
 
-
-    /**
-     * SOAP-server options of the web service
-     *
-     * @var    array
-     * @access public
-     */
-    //public $soapServerOptions = array();
-
     /**
      * SOAP schema related URIs
      *
@@ -144,7 +135,7 @@ class Services_Webservice_Definition
     private $_classname;
 
     /**
-     * exclude these methods from web service
+     * Exclude these methods from web service
      *
      * @var    array
      * @access private
@@ -152,15 +143,7 @@ class Services_Webservice_Definition
     private $_hiddenMethods;
 
     /**
-     * error namespace
-     *
-     * @var    bool
-     * @access private
-     */
-    private $_warningNamespace;
-
-    /**
-     * constructor
+     * Constructor
      *
      * @var    object|string  $class
      * @var    string         $namespace
@@ -179,19 +162,13 @@ class Services_Webservice_Definition
             require_once 'Services/Webservice/Definition/Exception.php';
             throw new Services_Webservice_Definition_NotClassException();
         }
-        $namespace = trim($namespace);
-        if ($namespace != '') {
+        if (trim($namespace) != '') {
             $this->namespace = $namespace;
             //$this->namespace .= ((substr($namespace, -1) == '/') ? '' : '/');
         } else {
             $this->namespace = 'http://example.org/';
         }
-        $this->_warningNamespace = (bool) (strncmp($this->namespace, 'http://example.org', 18) === 0);
 
-        $this->description = ($description != '') ? $description : 'my example service description';
-        /*$this->soapServerOptions = (isset($options) && count($options) > 0) ? $options : array(
-            'uri' => $this->namespace,
-            'encoding' => SOAP_ENCODED);*/
         $this->_wsdlStruct = array();
         $this->_hiddenMethods = array(
             '__construct',
@@ -199,23 +176,22 @@ class Services_Webservice_Definition
             '__call',
             '__get',
             '__set',
-            'handle');
+            $this->_classname);
         $this->protocol = 'http';
     }
 
     // }}}
-    // {{{ handleWSDL()
+    // {{{ getWSDL()
     /**
-     * Returns the WSDL file
+     * Returns the WSDL document
      *
      * @access public
      * @return string
      */
-    public function handleWSDL()
+    public function getWSDL()
     {
         $this->intoStruct();
 
-        header('Content-Type: text/xml');
         $this->_wsdl = new DOMDocument('1.0' ,'utf-8');
         $this->createWSDLDefinitions();
         $this->createWSDLTypes();
@@ -227,18 +203,17 @@ class Services_Webservice_Definition
     }
 
     // }}}
-    // {{{ createDISCO()
+    // {{{ getDISCO()
     /**
      * Returns service DISCO information
      *
      * @access public
      * @return string
      */
-    public function handleDISCO()
+    public function getDISCO()
     {
         $this->intoStruct();
 
-        header('Content-Type: text/xml');
         $this->_disco = new DOMDocument('1.0' ,'utf-8');
         $disco_discovery = $this->_disco->createElement('discovery');
         $disco_discovery->setAttribute('xmlns:xsi', self::SOAP_XML_SCHEMA_INSTANCE);
@@ -261,16 +236,20 @@ class Services_Webservice_Definition
     }
 
     // }}}
-    // {{{ handleINFO()
+    // {{{ getHTML()
     /**
      * Returns info-site in HTML format
      *
      * @access public
      * @return string
      */
-    public function handleINFO()
+    public function getHTML()
     {
         $this->intoStruct();
+
+        if (trim($this->description) == '') {
+            $this->description = 'My example service description';
+        }
 
         $css = '
 body {
@@ -329,7 +308,7 @@ a:hover {
 <h1>' . $this->_classname . '</h1>
 <p>' . htmlspecialchars($this->description) . '</p>
 </div>
-<p>The following operations are supported. For a formal definition, please review the <a href="' . htmlentities($_SERVER['PHP_SELF']) . '?WSDL">Service Description</a>.</p>
+<p>The following operations are supported. For a formal definition, please review the <a href="' . htmlentities($_SERVER['PHP_SELF']) . '?wsdl">Service Description</a>.</p>
 <ul>';
 
         foreach ($this->_wsdlStruct[$this->_classname]['method'] as $methodName => $method) {
@@ -356,8 +335,7 @@ a:hover {
         $html .= '</ul>
 <p><a href="' . htmlentities($_SERVER['PHP_SELF']) . '?DISCO">DISCO</a> makes it possible for clients to reflect against endpoints to discover services and their associated <acronym title="Web Service Description Language">WSDL</acronym> documents.</p>';
 
-        if ($this->_warningNamespace == true
-            || strncmp($this->namespace, 'http://example.org', 18) === 0) {
+        if (strncmp($this->namespace, 'http://example.org', 18) === 0) {
             $html .= '
 <p class="warning"><strong>This web service is using http://example.org/ as its default namespace.<br />
 Recommendation: Change the default namespace before the <acronym title="eXtensible Markup Language">XML</acronym> Web service is made public.</strong></p>
@@ -488,10 +466,10 @@ For more details on URIs, see <a href="http://www.ietf.org/rfc/rfc2396.txt"><acr
 
                 $docComments = $method->getDocComment();
 
-
-
-
-
+                // Skip method?
+                if (strpos($docComments, '* @webservice.hidden') !== false) {
+                    continue;
+                }
 
                 // Deprecated?
                 if (strpos($docComments, '* @deprecated') !== false) {
@@ -768,7 +746,7 @@ For more details on URIs, see <a href="http://www.ietf.org/rfc/rfc2396.txt"><acr
             $operation->setAttribute('name', $methodName);
             $binding->appendChild($operation);
             $soap_operation = $this->_wsdl->createElement('soap:operation');
-            $soap_operation->setAttribute('soapAction', 'urn:'.$this->_classname.'Action');
+            $soap_operation->setAttribute('soapAction', 'urn:' . $this->_classname.'Action');
             $operation->appendChild($soap_operation);
             $input  = $this->_wsdl->createElement('input');
             $output = $this->_wsdl->createElement('output');
@@ -776,12 +754,12 @@ For more details on URIs, see <a href="http://www.ietf.org/rfc/rfc2396.txt"><acr
             $operation->appendChild($output);
             $soap_body = $this->_wsdl->createElement('soap:body');
             $soap_body->setAttribute('use', 'encoded');
-            $soap_body->setAttribute('namespace', 'urn:'.$this->namespace);
+            $soap_body->setAttribute('namespace', 'urn:' . $this->namespace);
             $soap_body->setAttribute('encodingStyle', self::SOAP_SCHEMA_ENCODING );
             $input->appendChild($soap_body);
             $soap_body = $this->_wsdl->createElement('soap:body');
             $soap_body->setAttribute('use', 'encoded');
-            $soap_body->setAttribute('namespace', 'urn:'.$this->namespace);
+            $soap_body->setAttribute('namespace', 'urn:' . $this->namespace);
             $soap_body->setAttribute('encodingStyle', self::SOAP_SCHEMA_ENCODING );
             $output->appendChild($soap_body);
         }
