@@ -291,6 +291,12 @@ a:visited {
 a:hover {
     color: #003300;
 }
+li.deprecated {
+    color: #A0A0A0;
+}
+span.deprecated {
+    font-weight: bold;
+}
 ';
 
         $html = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
@@ -298,7 +304,7 @@ a:hover {
 <html>
 <head>
 <title>' . $this->_classname . ' Web Service</title>
-<meta name="generator" content="PEAR::Services_Webservice" />
+<meta name="generator" content="PEAR::Services_Webservice @version@" />
 <style type="text/css">
 ' . $css . '
 </style>
@@ -326,10 +332,12 @@ a:hover {
                                      . str_repeat('[]', $methodVars['length']);
                 }
             }
-            $html .= sprintf('<li><samp><var class="returnedValue">%s</var> <b class="functionName">%s</b>( <var class="parameter">%s</var> )</samp>%s</li>'
+            $html .= sprintf('<li%s><samp><var class="returnedValue">%s</var> <b class="functionName">%s</b>( <var class="parameter">%s</var> )</samp>%s%s</li>'
+                    , ((empty($method['deprecated'])) ? '' : ' class="deprecated"')
                     , implode(',', $returnValue)
                     , $methodName
                     , implode('</var> , <var class="parameter">', $paramValue)
+                    , ((empty($method['deprecated'])) ? '' : ('<br /><span class="description deprecated">This method is deprecated!</span>'))
                     , ((empty($method['description'])) ? '' : ('<br /><span class="description">' . htmlspecialchars($method['description']) . '</span>')));
         }
         $html .= '</ul>

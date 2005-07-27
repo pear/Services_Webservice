@@ -1,45 +1,74 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <package version="1.0">
-	<name>Services_Webservice</name>
-	<summary>Create webservices</summary>
-	<description>
-	Easy Webservice creation
-	</description>
-	<license>PHP License</license>
-	<maintainers>
-		<maintainer>
-			<user>crafics</user>
-			<name>Manfred Weber</name>
-			<email>crafics@php.net</email>
-			<role>lead</role>
-		</maintainer>
-               <maintainer>
-                        <user>jausions</user>
-                        <name>Philippe Jausions</name>
-                        <email>Philippe.Jausions@11abacus.com</email>
-                        <role>developer</role>
-                </maintainer>
-               <maintainer>
-                        <user>mfonda</user>
-                        <name>Matthew Fonda</name>
-                        <email>mfonda@php.net</email>
-                        <role>developer</role>
-                </maintainer>
-	</maintainers>
-	<release>
-		<version>0.4.0</version>
-		<date>2005-07-24</date>
-		<state>alpha</state>
-		<notes>
-- new wsdl model
-		</notes>
-		<filelist>
-			<dir name="/" baseinstalldir="Services">  
-				<file role="php" name="Webservice.php" install-as="Webservice.php" />  
-			</dir>  
-			<dir name="tests" role="test" baseinstalldir="Services/Webservice">  
-				<file name="test_01.php"/>
-			</dir>  
-		</filelist>
-	</release>
+    <name>Services_Webservice</name>
+    <summary>Create web services and description (WSDL, DISCO, and info. page)</summary>
+    <description>
+This package helps you easily create web services (SOAP).
+    </description>
+    <license>PHP License</license>
+    <maintainers>
+        <maintainer>
+            <user>crafics</user>
+            <name>Manfred Weber</name>
+            <email>crafics@php.net</email>
+            <role>lead</role>
+        </maintainer>
+        <maintainer>
+            <user>jausions</user>
+            <name>Philippe Jausions</name>
+            <email>Philippe.Jausions@11abacus.com</email>
+            <role>developer</role>
+        </maintainer>
+        <maintainer>
+            <user>mfonda</user>
+            <name>Matthew Fonda</name>
+            <email>mfonda@php.net</email>
+            <role>developer</role>
+        </maintainer>
+    </maintainers>
+    <release>
+        <version>0.5.0</version>
+        <state>alpha</state>
+        <date>2005-07-27</date>
+        <notes>
+- Class restructuration.
+  New Services_Webservice_Definition helper class.
+        </notes>
+        <filelist>
+            <dir name="/" baseinstalldir="Services">
+                <file role="php">Webservice.php</file>
+                <dir name="Webservice" role="php">
+                    <file>Definition.php</file>
+                    <dir name="Definition" role="php">
+                        <file>Exception.php</file>
+                    </dir>
+                </dir>
+            </dir>
+            <dir name="tests" role="test" baseinstalldir="Services/Webservice">
+                <file>test_01.php</file>
+            </dir>
+        </filelist>
+    </release>
+    <changelog>
+        <release>
+            <version>0.4.0</version>
+            <state>alpha</state>
+            <date>2005-07-24</date>
+            <notes>
+- new WSDL model
+            </notes>
+        </release>
+        <release>
+            <version>0.3.1</version>
+            <state>alpha</state>
+            <date>2005-07-19</date>
+            <notes>
+- Improved infopage (HTML)
+- method descriptions support (docblock parsing)
+            </notes>
+        </release>
+    </changelog>
+    <deps>
+        <dep type="ext" rel="has">soap</dep>
+    </deps>
 </package>
