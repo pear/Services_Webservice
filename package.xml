@@ -41,6 +41,9 @@ This package helps you easily create web services (SOAP).
                     <file>Definition.php</file>
                     <dir name="Definition" role="php">
                         <file>Exception.php</file>
+                        <file>DISCO.php</file>
+                        <file>HTML.php</file>
+                        <file>WSDL.php</file>
                     </dir>
                 </dir>
             </dir>

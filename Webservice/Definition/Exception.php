@@ -41,4 +41,11 @@ class Services_Webservice_Definition_NotClassException extends Services_Webservi
 {
 }
 
+/**
+ * Unknown definition format
+ */
+class Services_Webservice_Definition_UnknownFormatException extends Services_Webservice_Definition_Exception
+{
+}
+
 ?>

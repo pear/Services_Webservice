@@ -138,7 +138,7 @@ abstract class Services_Webservice
             require_once 'Services/Webservice/Definition.php';
             $this->_wsdlWriter = new Services_Webservice_Definition($this->_classname, $this->namespace, $this->description);
             $this->_wsdlWriter->protocol = $this->protocol;
-            echo $this->_wsdlWriter->{'get' . $action}();
+            echo $this->_wsdlWriter->{'to' . $action}();
         } else {
             $this->createServer();
         }

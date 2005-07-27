@@ -28,7 +28,8 @@
 /**
  * Class to perform the introspection of the web service
  *
- * Uses Reflection API to do introspection of the class's methods.
+ * Uses Reflection API and parses docblock comments to do introspection
+ * of the class's methods.
  *
  * @author  Manfred Weber <weber@mayflower.de>
  * @author  Philippe Jausions <Philippe.Jausions@11abacus.com>
@@ -54,32 +55,6 @@ class Services_Webservice_Definition
     public $description;
 
     /**
-     * Protocol of the web service
-     *
-     * @var    string
-     * @access public
-     */
-    public $protocol;
-
-    /**
-     * SOAP schema related URIs
-     *
-     * @access private
-     */
-    const SOAP_XML_SCHEMA_VERSION  = 'http://www.w3.org/2001/XMLSchema';
-    const SOAP_XML_SCHEMA_INSTANCE = 'http://www.w3.org/2001/XMLSchema-instance';
-    const SOAP_SCHEMA_ENCODING = 'http://schemas.xmlsoap.org/soap/encoding/';
-    const SOAP_XML_SCHEMA_MIME = 'http://schemas.xmlsoap.org/wsdl/mime/';
-    const SOAP_ENVELOP         = 'http://schemas.xmlsoap.org/soap/envelope/';
-    const SCHEMA_SOAP_HTTP     = 'http://schemas.xmlsoap.org/soap/http';
-    const SCHEMA_SOAP          = 'http://schemas.xmlsoap.org/wsdl/soap/';
-    const SCHEMA_WSDL          = 'http://schemas.xmlsoap.org/wsdl/';
-    const SCHEMA_WSDL_HTTP     = 'http://schemas.xmlsoap.org/wsdl/http/';
-    const SCHEMA_DISCO         = 'http://schemas.xmlsoap.org/disco/';
-    const SCHEMA_DISCO_SCL     = 'http://schemas.xmlsoap.org/disco/scl/';
-    const SCHEMA_DISCO_SOAP    = 'http://schemas.xmlsoap.org/disco/soap/';
-
-    /**
      * Simple WSDL types
      *
      * @var    array
@@ -97,34 +72,6 @@ class Services_Webservice_Definition
      * @access private
      */
     private $_wsdlStruct;
-
-    /**
-     * DISCO DOM root node
-     *
-     * The DISCO DOM object
-     *
-     * @var    object
-     * @access private
-     */
-    private $_disco;
-
-    /**
-     * WSDL DOM root node
-     *
-     * The WSDL DOM object
-     *
-     * @var    object
-     * @access private
-     */
-    private $_wsdl;
-
-    /**
-     * WSDL-definitions DOM node
-     *
-     * @var    object
-     * @access private
-     */
-    private $_wsdlDefinitions;
 
     /**
      * Name of the class from which to create a web service from
@@ -160,7 +107,7 @@ class Services_Webservice_Definition
             $this->_classname = $class;
         } else {
             require_once 'Services/Webservice/Definition/Exception.php';
-            throw new Services_Webservice_Definition_NotClassException();
+            throw new Services_Webservice_Definition_NotClassException('Expected a class name or instance.');
         }
         if (trim($namespace) != '') {
             $this->namespace = $namespace;
@@ -178,191 +125,9 @@ class Services_Webservice_Definition
             '__call',
             '__get',
             '__set',
+            '__sleep',
+            '__wakeup',
             $this->_classname);
-        $this->protocol = 'http';
-    }
-
-    // }}}
-    // {{{ getWSDL()
-    /**
-     * Returns the WSDL document
-     *
-     * @access public
-     * @return string
-     */
-    public function getWSDL()
-    {
-        $this->intoStruct();
-
-        $this->_wsdl = new DOMDocument('1.0' ,'utf-8');
-        $this->createWSDLDefinitions();
-        $this->createWSDLTypes();
-        $this->createWSDLMessages();
-        $this->createWSDLPortType();
-        $this->createWSDLBinding();
-        $this->createWSDLService();
-        return $this->_wsdl->saveXML();
-    }
-
-    // }}}
-    // {{{ getDISCO()
-    /**
-     * Returns service DISCO information
-     *
-     * @access public
-     * @return string
-     */
-    public function getDISCO()
-    {
-        $this->intoStruct();
-
-        $this->_disco = new DOMDocument('1.0' ,'utf-8');
-        $disco_discovery = $this->_disco->createElement('discovery');
-        $disco_discovery->setAttribute('xmlns:xsi', self::SOAP_XML_SCHEMA_INSTANCE);
-        $disco_discovery->setAttribute('xmlns:xsd', self::SOAP_XML_SCHEMA_VERSION);
-        $disco_discovery->setAttribute('xmlns', self::SCHEMA_DISCO );
-        $disco_contractref = $this->_disco->createElement('contractRef');
-        $urlBase = $this->protocol . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF'];
-        $disco_contractref->setAttribute('ref',    $urlBase . '?wsdl');
-        $disco_contractref->setAttribute('docRef', $urlBase);
-        $disco_contractref->setAttribute('xmlns',  self::SCHEMA_DISCO_SCL);
-        $disco_soap = $this->_disco->createElement('soap');
-        $disco_soap->setAttribute('address',  $urlBase);
-        $disco_soap->setAttribute('xmlns:q1', $this->namespace);
-        $disco_soap->setAttribute('binding',  'q1:' . $this->_classname);
-        $disco_soap->setAttribute('xmlns',    self::SCHEMA_DISCO_SCL);
-        $disco_contractref->appendChild($disco_soap);
-        $disco_discovery->appendChild($disco_contractref);
-        $this->_disco->appendChild($disco_discovery);
-        return $this->_disco->saveXML();
-    }
-
-    // }}}
-    // {{{ getHTML()
-    /**
-     * Returns info-site in HTML format
-     *
-     * @access public
-     * @return string
-     */
-    public function getHTML()
-    {
-        $this->intoStruct();
-
-        if (trim($this->description) == '') {
-            $this->description = 'My example service description';
-        }
-
-        $css = '
-body {
-    margin: 0px;
-    padding: 10px;
-    font-family: sans-serif;
-}
-#header {
-    background-color: #339900;
-    color: #FFFFFF;
-    padding: 5px 10px;
-    margin: -10px;
-}
-h1 {
-    font-size: xx-large;
-    color: #CCFF99;
-}
-#header p {
-    font-size: large;
-}
-
-dt {
-    margin-top: 1em;
-}
-
-.description {
-    padding-left: 1.5em;
-    margin-bottom: 1.5em;
-}
-
-a:link {
-    color: #006600;
-}
-
-a:visited {
-    color: #030;
-}
-
-a:hover {
-    color: #003300;
-}
-li.deprecated {
-    color: #A0A0A0;
-}
-span.deprecated {
-    font-weight: bold;
-}
-';
-
-        $html = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html>
-<head>
-<title>' . $this->_classname . ' Web Service</title>
-<meta name="generator" content="PEAR::Services_Webservice @version@" />
-<style type="text/css">
-' . $css . '
-</style>
-</head>
-<body>
-<div id="header">
-<h1>' . $this->_classname . '</h1>
-<p>' . htmlspecialchars($this->description) . '</p>
-</div>
-<p>The following operations are supported. For a formal definition, please review the <a href="' . htmlentities($_SERVER['PHP_SELF']) . '?wsdl">Service Description</a>.</p>
-<ul>';
-
-        foreach ($this->_wsdlStruct[$this->_classname]['method'] as $methodName => $method) {
-            $paramValue = array();
-            foreach ($method['var'] AS $methodVars) {
-                if (isset($methodVars['param'])) {
-                    $paramValue[] = $methodVars['type']
-                                     . str_repeat('[]', $methodVars['length']);
-                }
-            }
-            $returnValue = array();
-            foreach ($method['var'] AS $methodVars) {
-                if (isset($methodVars['return'])) {
-                    $returnValue[] = $methodVars['type']
-                                     . str_repeat('[]', $methodVars['length']);
-                }
-            }
-            $html .= sprintf('<li%s><samp><var class="returnedValue">%s</var> <b class="functionName">%s</b>( <var class="parameter">%s</var> )</samp>%s%s</li>'
-                    , ((empty($method['deprecated'])) ? '' : ' class="deprecated"')
-                    , implode(',', $returnValue)
-                    , $methodName
-                    , implode('</var> , <var class="parameter">', $paramValue)
-                    , ((empty($method['deprecated'])) ? '' : ('<br /><span class="description deprecated">This method is deprecated!</span>'))
-                    , ((empty($method['description'])) ? '' : ('<br /><span class="description">' . htmlspecialchars($method['description']) . '</span>')));
-        }
-        $html .= '</ul>
-<p><a href="' . htmlentities($_SERVER['PHP_SELF']) . '?DISCO">DISCO</a> makes it possible for clients to reflect against endpoints to discover services and their associated <acronym title="Web Service Description Language">WSDL</acronym> documents.</p>';
-
-        if (strncmp($this->namespace, 'http://example.org', 18) === 0) {
-            $html .= '
-<p class="warning"><strong>This web service is using http://example.org/ as its default namespace.<br />
-Recommendation: Change the default namespace before the <acronym title="eXtensible Markup Language">XML</acronym> Web service is made public.</strong></p>
-
-<p>Each XML Web service needs a unique namespace in order for client applications to distinguish it from other services on the Web. http://example.org/ is available for XML Web services that are under development, but published XML Web services should use a more permanent namespace.<br />
-Your XML Web service should be identified by a namespace that you control. For example, you can use your company`s Internet domain name as part of the namespace. Although many XML Web service namespaces look like <acronym title="Uniform Resource Locators">URLs</acronym>, they need not point to actual resources on the Web. (XML Web service namespaces are <acronym title="Uniform Resouce Identifiers">URIs</acronym>.)</p>
-
-<p>For more details on XML namespaces, see the <acronym title="World Wide Web Consortium">W3C</acronym> recommendation on <a href="http://www.w3.org/TR/REC-xml-names/">Namespaces in XML</a>.<br />
-For more details on <acronym title="Web Service Description Language">WSDL</acronym>, see the <a href="http://www.w3.org/TR/wsdl">WSDL Specification</a>.<br />
-For more details on URIs, see <a href="http://www.ietf.org/rfc/rfc2396.txt"><acronym title="Request For Comment">RFC</acronym> 2396</a>.</p>
-<p><small>Powered by PEAR <a href="http://pear.php.net/">http://pear.php.net</a></small></p>
-</body>
-</html>';
-
-        }
-
-        return $html;
     }
 
     // }}}
@@ -380,6 +145,57 @@ For more details on URIs, see <a href="http://www.ietf.org/rfc/rfc2396.txt"><acr
             $this->classStructDispatch();
             $done = true;
         }
+    }
+
+    // }}}
+    // {{{ getStruct()
+    /**
+     * Returns the structure of classes as parsed by intoStruct
+     *
+     * @access public
+     */
+    public function getStruct()
+    {
+        $this->intoStruct();
+        return $this->_wsdlStruct;
+    }
+
+    // }}}
+    // {{{ getClassName()
+    /**
+     * Returns the name of the class being defined
+     *
+     * @access public
+     */
+    public function getClassName()
+    {
+        return $this->_classname;
+    }
+
+    // }}}
+    // {{{ __call()
+    /**
+     * Returns web service definition in requested format
+     *
+     * Catch-all for toWSDL(), toHTML() and toDISCO()
+     *
+     * @param  string  $name method's name being actually called
+     * @param  array
+     * @return string
+     * @access public
+     * @throws Services_Webservice_Definition_UnknownFormatException
+     */
+    public function __call($name, $arg)
+    {
+        list($format) = sscanf($name, 'to%s');
+        include_once 'Services/Webservice/Definition/' . basename($format) . '.php';
+        $class = 'Services_Webservice_Definition_' . $format;
+        if (!class_exists($class)) {
+            require_once 'Services/Webservice/Definition/Exception.php';
+            throw new Services_Webservice_Definition_UnknownFormatException('Unknown definition format.');
+        }
+        $formatter = new $class($this);
+        return $formatter->toString();
     }
 
     // }}}
@@ -539,307 +355,6 @@ For more details on URIs, see <a href="http://www.ietf.org/rfc/rfc2396.txt"><acr
                 $_var['return'] = true;
             }
         }
-    }
-
-    // }}}
-    // {{{ createWSDLDefinitions()
-    /**
-     * Creates the definition node
-     *
-     * @return void
-     */
-    protected function createWSDLDefinitions()
-    {
-        /*
-        <definitions name="myService"
-            targetNamespace="urn:myService"
-            xmlns:typens="urn:myService"
-            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-            xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
-            xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/"
-            xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
-            xmlns="http://schemas.xmlsoap.org/wsdl/">
-        */
-
-        $this->_wsdlDefinitions = $this->_wsdl->createElement('definitions');
-        $this->_wsdlDefinitions->setAttribute('name', $this->_classname);
-        $this->_wsdlDefinitions->setAttribute('targetNamespace', 'urn:'.$this->_classname);
-        $this->_wsdlDefinitions->setAttribute('xmlns:typens', 'urn:'.$this->_classname);
-        $this->_wsdlDefinitions->setAttribute('xmlns:xsd', self::SOAP_XML_SCHEMA_VERSION);
-        $this->_wsdlDefinitions->setAttribute('xmlns:soap', self::SCHEMA_SOAP);
-        $this->_wsdlDefinitions->setAttribute('xmlns:soapenc', self::SOAP_SCHEMA_ENCODING);
-        $this->_wsdlDefinitions->setAttribute('xmlns:wsdl', self::SCHEMA_WSDL);
-        $this->_wsdlDefinitions->setAttribute('xmlns', self::SCHEMA_WSDL);
-
-        //$this->_wsdlDefinitions->setAttribute('xmlns:mime', self::SOAP_XML_SCHEMA_MIME);
-        //$this->_wsdlDefinitions->setAttribute('xmlns:tns', $this->namespace);
-        //$this->_wsdlDefinitions->setAttribute('xmlns:http', self::SCHEMA_WSDL_HTTP);
-
-        $this->_wsdl->appendChild($this->_wsdlDefinitions);
-    }
-
-    // }}}
-    // {{{ createWSDLTypes()
-    /**
-     * Creates the types node
-     *
-     * @return void
-     */
-    protected function createWSDLTypes()
-    {
-        /*
-        <types>
-            <xsd:schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:myService"/>
-        </types>
-        */
-        $types  = $this->_wsdl->createElement('types');
-        $schema = $this->_wsdl->createElement('xsd:schema');
-        $schema->setAttribute('xmlns', self::SOAP_XML_SCHEMA_VERSION );
-        $schema->setAttribute('targetNamespace', 'urn:'.$this->_classname);
-        $types->appendChild($schema);
-
-        // array
-        /*
-        <xsd:complexType name="ArrayOfclassC">
-            <xsd:complexContent>
-                <xsd:restriction base="soapenc:Array">
-                    <xsd:attribute ref="soapenc:arrayType" wsdl:arrayType="typens:classC[]"/>
-                </xsd:restriction>
-            </xsd:complexContent>
-        </xsd:complexType>
-        */
-        if (isset($this->_wsdlStruct['array'])) {
-
-            foreach ($this->_wsdlStruct['array'] as $source => $target) {
-
-                //<s:complexType name="ArrayOfArrayOfInt">
-                //<s:sequence>
-                //<s:element minOccurs="0" maxOccurs="unbounded" name="ArrayOfInt" nillable="true" type="tns:ArrayOfInt"/>
-                //</s:sequence>
-
-                $complexType    = $this->_wsdl->createElement('xsd:complexType');
-                $complexContent = $this->_wsdl->createElement('xsd:complexContent');
-                $restriction    = $this->_wsdl->createElement('xsd:restriction');
-                $attribute      = $this->_wsdl->createElement('xsd:attribute');
-                $restriction->appendChild($attribute);
-                $complexContent->appendChild($restriction);
-                $complexType->appendChild($complexContent);
-                $schema->appendChild($complexType);
-
-                $complexType->setAttribute('name', $source);
-                $restriction->setAttribute('base', 'soapenc:Array');
-                $attribute->setAttribute('ref', 'soapenc:arrayType');
-
-                try {
-                    $class = new ReflectionClass($target);
-                } catch (Exception $e) {
-                }
-
-                if(in_array($target, $this->_simpleTypes)){
-                    $attribute->setAttribute('wsdl:arrayType', 'xsd:'    . $target . '[]');
-                }elseif(isset($class)){
-                    $attribute->setAttribute('wsdl:arrayType', 'typens:' . $target . '[]');
-                }else{
-                    $attribute->setAttribute('wsdl:arrayType', 'typens:' . $target . '[]');
-                }
-                unset($class);
-
-            }
-        }
-
-        // class
-        /*
-        <xsd:complexType name="classB">
-            <xsd:all>
-                <xsd:element name="classCArray" type="typens:ArrayOfclassC" />
-            </xsd:all>
-        </xsd:complexType>
-        */
-        if (isset($this->_wsdlStruct['class'])) {
-            foreach ($this->_wsdlStruct['class'] as $className=>$classProperty) {
-                $complextype = $this->_wsdl->createElement('xsd:complexType');
-                $complextype->setAttribute('name', $className);
-                $sequence = $this->_wsdl->createElement('xsd:all');
-                $complextype->appendChild($sequence);
-                $schema->appendChild($complextype);
-                foreach ($classProperty['property'] as $classPropertyName => $classPropertyValue) {
-                    $element = $this->_wsdl->createElement('xsd:element');
-                    $element->setAttribute('name', $classPropertyName);
-                    $element->setAttribute('type', ((in_array($classPropertyValue['wsdltype'], $this->_simpleTypes))
-                                                            ? 'xsd:'
-                                                            : 'typens:') . $classPropertyValue['wsdltype']);
-                    $sequence->appendChild($element);
-                }
-            }
-        }
-
-        $this->_wsdlDefinitions->appendChild($types);
-    }
-
-    // }}}
-    // {{{ createWSDLMessages()
-    /**
-     * Creates the messages node
-     *
-     * @return void
-     */
-    protected function createWSDLMessages()
-    {
-        /*
-        <message name="hello">
-            <part name="i" type="xsd:int"/>
-            <part name="j" type="xsd:string"/>
-        </message>
-        <message name="helloResponse">
-            <part name="helloResponse" type="xsd:string"/>
-        </message>
-        */
-        foreach ($this->_wsdlStruct[$this->_classname]['method'] as $methodName => $method) {
-            $messageInput = $this->_wsdl->createElement('message');
-            $messageInput->setAttribute('name', $methodName);
-            $messageOutput = $this->_wsdl->createElement('message');
-            $messageOutput->setAttribute('name', $methodName . 'Response');
-            $this->_wsdlDefinitions->appendChild($messageInput);
-            $this->_wsdlDefinitions->appendChild($messageOutput);
-
-            foreach ($method['var'] as $methodVars) {
-                if (isset($methodVars['param'])) {
-                    $part = $this->_wsdl->createElement('part');
-                    $part->setAttribute('name', $methodVars['name']);
-                    $part->setAttribute('type', (($methodVars['array'] != 1 && $methodVars['class'] != 1)
-                        ? 'xsd:' : 'typens:') . $methodVars['wsdltype']);
-                    $messageInput->appendChild($part);
-                }
-                if (isset($methodVars['return'])) {
-                    $part = $this->_wsdl->createElement('part');
-                    $part->setAttribute('name', $methodName.'Response'); //$methodVars['wsdltype']);
-                    $part->setAttribute('type', (($methodVars['array'] != 1 && $methodVars['class'] != 1)
-                        ? 'xsd:' : 'typens:') . $methodVars['wsdltype']);
-                    $messageOutput->appendChild($part);
-                }
-            }
-        }
-    }
-
-    // }}}
-    // {{{ createWSDLBinding()
-    /**
-     * Create the binding node
-     *
-     * @return void
-     */
-    protected function createWSDLBinding()
-    {
-        /*
-        <binding name="myServiceBinding" type="typens:myServicePort">
-            <soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
-                <operation name="hello">
-                    <soap:operation soapAction="urn:myServiceAction"/>
-                    <input>
-                        <soap:body use="encoded" namespace="urn:myService" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
-                    </input>
-                    <output>
-                        <soap:body use="encoded" namespace="urn:myService" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
-                    </output>
-            </operation>
-        </binding>
-        */
-        $binding = $this->_wsdl->createElement('binding');
-        $binding->setAttribute('name', $this->_classname . 'Binding');
-        $binding->setAttribute('type', 'typens:' . $this->_classname . 'Port');
-        $soap_binding = $this->_wsdl->createElement('soap:binding');
-        $soap_binding->setAttribute('style', 'rpc');
-        $soap_binding->setAttribute('transport', self::SCHEMA_SOAP_HTTP);
-        $binding->appendChild($soap_binding);
-        foreach ($this->_wsdlStruct[$this->_classname]['method'] as $methodName => $methodVars) {
-            $operation = $this->_wsdl->createElement('operation');
-            $operation->setAttribute('name', $methodName);
-            $binding->appendChild($operation);
-            $soap_operation = $this->_wsdl->createElement('soap:operation');
-            $soap_operation->setAttribute('soapAction', 'urn:' . $this->_classname.'Action');
-            $operation->appendChild($soap_operation);
-            $input  = $this->_wsdl->createElement('input');
-            $output = $this->_wsdl->createElement('output');
-            $operation->appendChild($input);
-            $operation->appendChild($output);
-            $soap_body = $this->_wsdl->createElement('soap:body');
-            $soap_body->setAttribute('use', 'encoded');
-            $soap_body->setAttribute('namespace', 'urn:' . $this->namespace);
-            $soap_body->setAttribute('encodingStyle', self::SOAP_SCHEMA_ENCODING );
-            $input->appendChild($soap_body);
-            $soap_body = $this->_wsdl->createElement('soap:body');
-            $soap_body->setAttribute('use', 'encoded');
-            $soap_body->setAttribute('namespace', 'urn:' . $this->namespace);
-            $soap_body->setAttribute('encodingStyle', self::SOAP_SCHEMA_ENCODING );
-            $output->appendChild($soap_body);
-        }
-        $this->_wsdlDefinitions->appendChild($binding);
-    }
-
-    // }}}
-    // {{{ createWSDLPortType()
-    /**
-     * Creates the portType node
-     *
-     * @return void
-     */
-    protected function createWSDLPortType()
-    {
-        /*
-        <portType name="myServicePort">
-            <operation name="hello">
-                <input message="typens:hello"/>
-                <output message="typens:helloResponse"/>
-            </operation>
-        </portType>
-        */
-        $portType = $this->_wsdl->createElement('portType');
-        $portType->setAttribute('name', $this->_classname.'Port');
-        foreach ($this->_wsdlStruct[$this->_classname]['method'] as $methodName => $methodVars) {
-            $operation = $this->_wsdl->createElement('operation');
-            $operation->setAttribute('name', $methodName);
-            $portType->appendChild($operation);
-
-            $documentation = $this->_wsdl->createElement('documentation');
-            $documentation->appendChild($this->_wsdl->createTextNode($methodVars['description']));
-            $operation->appendChild($documentation);
-
-            $input  = $this->_wsdl->createElement('input');
-            $output = $this->_wsdl->createElement('output');
-            $input->setAttribute('message', 'typens:' . $methodName );
-            $output->setAttribute('message', 'typens:' . $methodName . 'Response');
-            $operation->appendChild($input);
-            $operation->appendChild($output);
-        }
-        $this->_wsdlDefinitions->appendChild($portType);
-    }
-
-    // }}}
-    // {{{ createWSDLService()
-    /**
-     * Creates the service node
-     *
-     * @return void
-     */
-    protected function createWSDLService()
-    {
-        /*
-        <service name="myService">
-            <port name="myServicePort" binding="typens:myServiceBinding">
-                <soap:address location="http://dschini.org/test1.php"/>
-            </port>
-        </service>
-        */
-        $service = $this->_wsdl->createElement('service');
-        $service->setAttribute('name', $this->_classname);
-        $port = $this->_wsdl->createElement('port');
-        $port->setAttribute('name', $this->_classname . 'Port');
-        $port->setAttribute('binding', 'typens:' . $this->_classname . 'Binding');
-        $adress = $this->_wsdl->createElement('soap:address');
-        $adress->setAttribute('location', $this->protocol . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF']);
-        $port->appendChild($adress);
-        $service->appendChild($port);
-        $this->_wsdlDefinitions->appendChild($service);
     }
 }
 
