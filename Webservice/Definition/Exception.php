@@ -35,16 +35,23 @@ class Services_Webservice_Definition_Exception extends PEAR_Exception
 }
 
 /**
- * Invalid class parameter for constructor
+ * Exception calls for Invalid class parameter for constructor
  */
 class Services_Webservice_Definition_NotClassException extends Services_Webservice_Definition_Exception
 {
 }
 
 /**
- * Unknown definition format
+ * Exception class for Unknown definition format
  */
 class Services_Webservice_Definition_UnknownFormatException extends Services_Webservice_Definition_Exception
+{
+}
+
+/**
+ * Exception class for Missing docblock comment
+ */
+class Services_Webservice_Definition_NoDocCommentException extends Services_Webservice_Definition_Exception
 {
 }
 

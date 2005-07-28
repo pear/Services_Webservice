@@ -241,12 +241,21 @@ class Services_Webservice_Definition
             $this->_wsdlStruct['class'][$className]['property'] = array();
             for ($i = 0; $i < count($properties); ++$i) {
                 if ($properties[$i]->isPublic()) {
-                    preg_match_all('~@var\s(\S+)~', $properties[$i]->getDocComment(), $var);
+                    $docComments = $properties[$i]->getDocComment();
+
+                    $propertyName = $properties[$i]->getName();
+
+                    if (!trim($docComments)) {
+                        require_once 'Services/Webservice/Definition/Exception.php';
+                        throw new Services_Webservice_Definition_NoDocCommentException('Property ' . $class . '::' . $propertyName . ' is missing docblock comment.');
+                    }
+
+                    preg_match_all('~\* @var\s(\S+)~', $docComments, $var);
 
                     $_cleanType = str_replace('[]', '', $var[1][0], $_length);
                     $_typens    = str_repeat('ArrayOf', $_length);
 
-                    $_properties =& $this->_wsdlStruct['class'][$className]['property'][$properties[$i]->getName()];
+                    $_properties =& $this->_wsdlStruct['class'][$className]['property'][$propertyName];
 
                     $_properties['type']     = $_cleanType;
                     $_properties['wsdltype'] = $_typens . $_cleanType;
@@ -291,6 +300,11 @@ class Services_Webservice_Definition
                 && !in_array($methodName, $this->_hiddenMethods)) {
 
                 $docComments = $method->getDocComment();
+
+                if (!trim($docComments)) {
+                    require_once 'Services/Webservice/Definition/Exception.php';
+                    throw new Services_Webservice_Definition_NoDocCommentException('Method ' . $this->_classname . '::' . $methodName . ' is missing docblock comment.');
+                }
 
                 // Skip method?
                 if (strpos($docComments, '* @webservice.hidden') !== false) {
