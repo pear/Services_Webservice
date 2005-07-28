@@ -26,6 +26,12 @@
 // {{{ class Services_Webservice_Definition
 
 /**
+ * Include exception class declarations
+ */
+require_once 'Services/Webservice/Definition/Exception.php';
+
+
+/**
  * Class to perform the introspection of the web service
  *
  * Uses Reflection API and parses docblock comments to do introspection
@@ -106,7 +112,6 @@ class Services_Webservice_Definition
         } elseif (is_string($class)) {
             $this->_classname = $class;
         } else {
-            require_once 'Services/Webservice/Definition/Exception.php';
             throw new Services_Webservice_Definition_NotClassException('Expected a class name or instance.');
         }
         if (trim($namespace) != '') {
@@ -191,7 +196,6 @@ class Services_Webservice_Definition
         include_once 'Services/Webservice/Definition/' . basename($format) . '.php';
         $class = 'Services_Webservice_Definition_' . $format;
         if (!class_exists($class)) {
-            require_once 'Services/Webservice/Definition/Exception.php';
             throw new Services_Webservice_Definition_UnknownFormatException('Unknown definition format.');
         }
         $formatter = new $class($this);
@@ -232,6 +236,7 @@ class Services_Webservice_Definition
      *
      * @var    string
      * @access private
+     * @throws Services_Webservice_Definition_NoDocCommentException
      */
     protected function classPropertiesIntoStruct($className)
     {
@@ -246,7 +251,6 @@ class Services_Webservice_Definition
                     $propertyName = $properties[$i]->getName();
 
                     if (!trim($docComments)) {
-                        require_once 'Services/Webservice/Definition/Exception.php';
                         throw new Services_Webservice_Definition_NoDocCommentException('Property ' . $class . '::' . $propertyName . ' is missing docblock comment.');
                     }
 
@@ -288,6 +292,7 @@ class Services_Webservice_Definition
      * Parses classes methods into struct
      *
      * @access protected
+     * @throws Services_Webservice_Definition_NoDocCommentException
      */
     protected function classMethodsIntoStruct()
     {
@@ -302,7 +307,6 @@ class Services_Webservice_Definition
                 $docComments = $method->getDocComment();
 
                 if (!trim($docComments)) {
-                    require_once 'Services/Webservice/Definition/Exception.php';
                     throw new Services_Webservice_Definition_NoDocCommentException('Method ' . $this->_classname . '::' . $methodName . ' is missing docblock comment.');
                 }
 
@@ -324,6 +328,9 @@ class Services_Webservice_Definition
                 // Params
                 preg_match_all('~@param\s(\S+)~', $docComments, $param);
                 $params = $method->getParameters();
+                if (count(%params) !=  count($param)) {
+
+                }
                 for ($i = 0; $i < count($params); ++$i) {
                     $_class = $params[$i]->getClass();
                     $_type  = ($_class) ? $_class->getName() : $param[1][$i];
