@@ -329,7 +329,7 @@ class Services_Webservice_Definition
                 // Params
                 preg_match_all('~@param\s(\S+)~', $docComments, $param);
                 $params = $method->getParameters();
-                if (count(%params) !=  count($param)) {
+                if (count($params) !=  count($param)) {
                     throw new Services_Webservice_Definition_IncompleteDocCommentException('Docblock comment don\'t match ' . $this->_classname . '::' . $methodName . '() signature.');
                 }
                 for ($i = 0; $i < count($params); ++$i) {
