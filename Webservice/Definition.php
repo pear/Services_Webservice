@@ -112,7 +112,8 @@ class Services_Webservice_Definition
         } elseif (is_string($class)) {
             $this->_classname = $class;
         } else {
-            throw new Services_Webservice_Definition_NotClassException('Expected a class name or instance.');
+            throw new Services_Webservice_Definition_NotClassException(
+                'Expected a class name or instance.');
         }
         if (trim($namespace) != '') {
             $this->namespace = $namespace;
@@ -196,7 +197,8 @@ class Services_Webservice_Definition
         include_once 'Services/Webservice/Definition/' . basename($format) . '.php';
         $class = 'Services_Webservice_Definition_' . $format;
         if (!class_exists($class)) {
-            throw new Services_Webservice_Definition_UnknownFormatException('Unknown definition format.');
+            throw new Services_Webservice_Definition_UnknownFormatException(
+                'Unknown definition format.');
         }
         $formatter = new $class($this);
         return $formatter->toString();
@@ -251,7 +253,9 @@ class Services_Webservice_Definition
                     $propertyName = $properties[$i]->getName();
 
                     if (!trim($docComments)) {
-                        throw new Services_Webservice_Definition_NoDocCommentException('Property ' . $class . '::' . $propertyName . ' is missing docblock comment.');
+                        throw new Services_Webservice_Definition_NoDocCommentException(
+                            'Property ' . $class . '::' . $propertyName
+                            . ' is missing docblock comment.');
                     }
 
                     preg_match_all('~\* @var\s(\S+)~', $docComments, $var);
@@ -329,8 +333,10 @@ class Services_Webservice_Definition
                 // Params
                 preg_match_all('~@param\s(\S+)~', $docComments, $param);
                 $params = $method->getParameters();
-                if (count($params) !=  count($param)) {
-                    throw new Services_Webservice_Definition_DocCommentMismatchException('Docblock comment doesn\'t match ' . $this->_classname . '::' . $methodName . '() signature.');
+                if (count($params) !=  count($param[1])) {
+                    throw new Services_Webservice_Definition_DocCommentMismatchException(
+                        'Docblock comment doesn\'t match ' . $this->_classname
+                        . '::' . $methodName . '() signature.');
                 }
                 for ($i = 0; $i < count($params); ++$i) {
                     $_class = $params[$i]->getClass();
