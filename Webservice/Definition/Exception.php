@@ -56,9 +56,9 @@ class Services_Webservice_Definition_NoDocCommentException extends Services_Webs
 }
 
 /**
- * Exception class for Incomplete docblock comment
+ * Exception class for Mismatched docblock comment
  */
-class Services_Webservice_Definition_IncompleteDocCommentException extends Services_Webservice_Definition_Exception
+class Services_Webservice_Definition_DocCommentMismatchException extends Services_Webservice_Definition_Exception
 {
 }
 

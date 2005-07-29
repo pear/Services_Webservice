@@ -293,7 +293,7 @@ class Services_Webservice_Definition
      *
      * @access protected
      * @throws Services_Webservice_Definition_NoDocCommentException
-     * @throws Services_Webservice_Definition_IncompleteDocCommentException
+     * @throws Services_Webservice_Definition_DocCommentMismatchException
      */
     protected function classMethodsIntoStruct()
     {
@@ -330,7 +330,7 @@ class Services_Webservice_Definition
                 preg_match_all('~@param\s(\S+)~', $docComments, $param);
                 $params = $method->getParameters();
                 if (count($params) !=  count($param)) {
-                    throw new Services_Webservice_Definition_IncompleteDocCommentException('Docblock comment doesn\'t match ' . $this->_classname . '::' . $methodName . '() signature.');
+                    throw new Services_Webservice_Definition_DocCommentMismatchException('Docblock comment doesn\'t match ' . $this->_classname . '::' . $methodName . '() signature.');
                 }
                 for ($i = 0; $i < count($params); ++$i) {
                     $_class = $params[$i]->getClass();
