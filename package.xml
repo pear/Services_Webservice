@@ -73,6 +73,6 @@ This package helps you easily create web services (SOAP).
     </changelog>
     <deps>
         <dep type="ext" rel="has">soap</dep>
-        <dep type="php" rel="ge" version="5.1.0" />
+        <dep type="php" rel="ge" version="5.1.0b2" />
     </deps>
 </package>
