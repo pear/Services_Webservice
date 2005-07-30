@@ -309,9 +309,9 @@ class Services_Webservice_Definition
             if ($method->isPublic()
                 && !in_array($methodName, $this->_hiddenMethods)) {
 
-                $docComments = $method->getDocComment();
+                $docComments = trim($method->getDocComment());
 
-                if (!trim($docComments)) {
+                if (!$docComments) {
                     throw new Services_Webservice_Definition_NoDocCommentException('Method ' . $this->_classname . '::' . $methodName . '() is missing docblock comment.');
                 }
 
@@ -326,8 +326,8 @@ class Services_Webservice_Definition
                 }
 
                 // Description
-                $_docComments_Description = trim(str_replace('/**', '', substr($docComments, 0, strpos($docComments, '@'))));
-                $docComments_Description = trim(substr($_docComments_Description, strpos($_docComments_Description, '*') + 1, strpos($_docComments_Description, '*', 1) - 1));
+                $docComments_Description = trim(substr($docComments, 0, strpos($docComments, '* @')), "\r\n\t *\0\x0B/");
+
                 $this->_wsdlStruct[$this->_classname]['method'][$methodName]['description'] = $docComments_Description;
 
                 // Params
