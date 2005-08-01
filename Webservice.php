@@ -1,8 +1,5 @@
 <?php
 
-ini_set('error_reporting', E_ALL);
-ini_set('error_log','/var/www/error.log');
-
 /* vim: set expandtab tabstop=4 shiftwidth=4: */
 
 /**
@@ -97,9 +94,8 @@ abstract class Services_Webservice
         }
         $this->namespace   = $namespace;
         $this->description = $description;
-        $this->soapServerOptions = (is_array($options) && count($options) > 0) ? $options : array(
-            'uri'      => $this->namespace,
-            'encoding' => SOAP_ENCODED);
+        $this->soapServerOptions['uri'] = isset($options['uri']) ? $options['uri'] : $this->namespace;
+        $this->soapServerOptions['encoding'] = isset($options['encoding']) ? $options['encoding'] : SOAP_ENCODED;
         $this->protocol = 'http';
         $this->_classname = get_class($this);
     }
@@ -127,7 +123,7 @@ abstract class Services_Webservice
                 header('Content-Type: text/xml');
                 break;
             default:
-                if (!empty($HTTP_RAW_POST_DATA)) {
+            	if (isset($_SERVER['HTTP_SOAPACTION'])) {
                     $action = null;
                 } else {
                     header('Content-Type: text/html');
