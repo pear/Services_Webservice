@@ -71,6 +71,14 @@ class Services_Webservice_Definition_DISCO
     const SCHEMA_DISCO_SOAP    = 'http://schemas.xmlsoap.org/disco/soap/';
 
     /**
+     * Class analyzer (introspection)
+     *
+     * @var    object Instance of Service_Webservice_Definition
+     * @access private
+     */
+    private $_parser;
+
+    /**
      * Constructor
      *
      * @var    object  $definition
@@ -81,6 +89,7 @@ class Services_Webservice_Definition_DISCO
         $this->namespace = $definition->namespace;
         $this->protocol  = $definition->protocol;
         $this->classname = $definition->getClassName();
+        $this->_parser   =& $definition;
     }
 
     // }}}
@@ -99,9 +108,21 @@ class Services_Webservice_Definition_DISCO
         $disco_discovery->setAttribute('xmlns:xsd', self::SOAP_XML_SCHEMA_VERSION);
         $disco_discovery->setAttribute('xmlns', self::SCHEMA_DISCO);
         $disco_contractref = $disco->createElement('contractRef');
-        $urlBase = $this->protocol . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF'];
-        $disco_contractref->setAttribute('ref',    $urlBase . '?wsdl');
-        $disco_contractref->setAttribute('docRef', $urlBase);
+        if ($urlService = $this->_parser->getURI('service')) {
+            $urlBase = $urlService;
+        } else {
+            $urlBase = $this->protocol . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF'];
+        }
+        if ($urlWSDL = $this->_parser->getURI('WSDL')) {
+            $disco_contractref->setAttribute('ref', $urlWSDL);
+        } else {
+            $disco_contractref->setAttribute('ref', $urlBase . '?wsdl');
+        }
+        if ($urlDoc = $this->_parser->getURI('doc')) {
+            $disco_contractref->setAttribute('docRef', $urlDoc);
+        } else {
+            $disco_contractref->setAttribute('docRef', $urlBase);
+        }
         $disco_contractref->setAttribute('xmlns',  self::SCHEMA_DISCO_SCL);
         $disco_soap = $disco->createElement('soap');
         $disco_soap->setAttribute('address',  $urlBase);

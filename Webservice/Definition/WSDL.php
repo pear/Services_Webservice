@@ -112,6 +112,14 @@ class Services_Webservice_Definition_WSDL
     private $classname;
 
     /**
+     * Class analyzer (introspection)
+     *
+     * @var    object Instance of Service_Webservice_Definition
+     * @access private
+     */
+    private $_parser;
+
+    /**
      * Constructor
      *
      * @var    object  $definition
@@ -441,9 +449,12 @@ class Services_Webservice_Definition_WSDL
         $port = $this->_wsdl->createElement('port');
         $port->setAttribute('name', $this->classname . 'Port');
         $port->setAttribute('binding', 'typens:' . $this->classname . 'Binding');
-        $adress = $this->_wsdl->createElement('soap:address');
-        $adress->setAttribute('location', $this->protocol . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF']);
-        $port->appendChild($adress);
+        $address = $this->_wsdl->createElement('soap:address');
+        if (!($urlService = $this->_parser->getURI('service'))) {
+            $urlService = $this->protocol . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF'];
+        }
+        $address->setAttribute('location', $urlService);
+        $port->appendChild($address);
         $service->appendChild($port);
         $this->_wsdlDefinitions->appendChild($service);
     }

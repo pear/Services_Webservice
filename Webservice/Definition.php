@@ -64,9 +64,9 @@ class Services_Webservice_Definition
      * Simple WSDL types
      *
      * @var    array
-     * @access private
+     * @access protected
      */
-    private $_simpleTypes = array(
+    protected $_simpleTypes = array(
         'string', 'int', 'float', 'bool', 'double', 'integer', 'boolean',
         'varstring', 'varint', 'varfloat', 'varbool', 'vardouble',
         'varinteger', 'varboolean');
@@ -75,25 +75,33 @@ class Services_Webservice_Definition
      * Classes are parsed into this struct
      *
      * @var    array
-     * @access private
+     * @access protected
      */
-    private $_wsdlStruct;
+    protected $_wsdlStruct;
 
     /**
      * Name of the class from which to create a web service from
      *
      * @var    string
-     * @access private
+     * @access protected
      */
-    private $_classname;
+    protected $_classname;
 
     /**
      * Exclude these methods from web service
      *
      * @var    array
-     * @access private
+     * @access protected
      */
-    private $_hiddenMethods;
+    protected $_hiddenMethods;
+
+    /**
+     * Some user-overridden URIs
+     *
+     * @var    array
+     * @access protected
+     */
+    protected $_URI = array();
 
     /**
      * Constructor
@@ -117,7 +125,6 @@ class Services_Webservice_Definition
         }
         if (trim($namespace) != '') {
             $this->namespace = $namespace;
-            //$this->namespace .= ((substr($namespace, -1) == '/') ? '' : '/');
         } else {
             $this->namespace = 'http://example.org/';
         }
@@ -158,6 +165,7 @@ class Services_Webservice_Definition
     /**
      * Returns the structure of classes as parsed by intoStruct
      *
+     * @retirn array
      * @access public
      */
     public function getStruct()
@@ -171,11 +179,59 @@ class Services_Webservice_Definition
     /**
      * Returns the name of the class being defined
      *
+     * @return string the nane of the class being introspected
      * @access public
      */
     public function getClassName()
     {
         return $this->_classname;
+    }
+
+    // }}}
+    // {{{ setURI()
+    /**
+     * Sets some URIs
+     *
+     * Allows to override the default value for some URI set in the definition
+     * Currently documented URI identifier:
+     *  - WSDL   : URI of the WSDL as it should be made public
+     *  - DISCO  : URI of the DISCO as it should be made public
+     *  - doc    : URI of the documentation page
+     *  - service: Base URI of the service
+     *
+     * @param  string|array $name URI identifier or array of URI
+     * @param  string       $URI
+     * @access public
+     */
+    public function setURI($name, $URI = null)
+    {
+        if (is_array($name)) {
+            $this->_URI = array_merge($this->_URI, $name);
+        } elseif (trim($name) && $URI) {
+            $this->_URI[$name] = $URI;
+        }
+    }
+
+    // }}}
+    // {{{ getURI()
+    /**
+     * Returns some URIs
+     *
+     * @param  string $name URI identifier or array of URI identifiers
+     * @return mixed   an array of found URIs if $name is an array,
+     *                 a string if $name is a string,
+     *                 or and NULL if $name is not found
+     * @access public
+     * @see setURI()
+     */
+    public function getURI($name = null)
+    {
+        if (is_array($name)) {
+            return array_intersect_key($this->_URI, array_flip($name));
+        } elseif (isset($this->_URI[$name])) {
+            return $this->_URI[$name];
+        }
+        return null;
     }
 
     // }}}

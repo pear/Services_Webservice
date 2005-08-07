@@ -74,6 +74,13 @@ class Services_Webservice_Definition_HTML
             $description = $this->_parser->description;
         }
 
+        if (!($urlWSDL = $this->_parser->getURI('WSDL'))) {
+            $urlWSDL = htmlentities($_SERVER['PHP_SELF']) . '?wsdl';
+        }
+        if (!($urlDISCO = $this->_parser->getURI('DISCO'))) {
+            $urlDISCO = htmlentities($_SERVER['PHP_SELF']) . '?DISCO';
+        }
+
         $css = '
 body {
     margin: 0px;
@@ -137,7 +144,7 @@ span.deprecated {
 <h1>' . $classname . '</h1>
 <p>' . htmlspecialchars($description) . '</p>
 </div>
-<p>The following operations are supported. For a formal definition, please review the <a href="' . htmlentities($_SERVER['PHP_SELF']) . '?wsdl">Service Description</a>.</p>
+<p>The following operations are supported. For a formal definition, please review the <a href="' . $urlWSDL . '">Service Description</a>.</p>
 <ul>';
 
         foreach ($wsdlStruct[$classname]['method'] as $methodName => $method) {
@@ -164,7 +171,7 @@ span.deprecated {
                     , ((empty($method['description'])) ? '' : ('<br /><span class="description">' . htmlspecialchars($method['description']) . '</span>')));
         }
         $html .= '</ul>
-<p><a href="' . htmlentities($_SERVER['PHP_SELF']) . '?DISCO">DISCO</a> makes it possible for clients to reflect against endpoints to discover services and their associated <acronym title="Web Service Description Language">WSDL</acronym> documents.</p>';
+<p><a href="' . $urlDISCO . '">DISCO</a> makes it possible for clients to reflect against endpoints to discover services and their associated <acronym title="Web Service Description Language">WSDL</acronym> documents.</p>';
 
         if (strncmp($namespace, 'http://example.org', 18) === 0) {
             $html .= '

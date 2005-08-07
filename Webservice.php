@@ -89,8 +89,6 @@ abstract class Services_Webservice
     {
         if (trim($namespace) == '') {
             $namespace = 'http://example.org/';
-        /*} else {
-            $namespace .= (substr($namespace, -1) == '/') ? '' : '/'; */
         }
         $this->namespace   = $namespace;
         $this->description = $description;
