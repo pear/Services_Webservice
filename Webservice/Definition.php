@@ -3,7 +3,7 @@
 /* vim: set expandtab tabstop=4 shiftwidth=4: */
 
 /**
- * Class introspection to expose as web service
+ * Class introspection to expose class as web service
  *
  * PHP 5
  *
@@ -96,7 +96,7 @@ class Services_Webservice_Definition
     protected $_hiddenMethods;
 
     /**
-     * Some user-overridden URIs
+     * Some user-overwritten URIs
      *
      * @var    array
      * @access protected
@@ -312,6 +312,16 @@ class Services_Webservice_Definition
                         throw new Services_Webservice_Definition_NoDocCommentException(
                             'Property ' . $class . '::' . $propertyName
                             . ' is missing docblock comment.');
+                    }
+
+                    // Skip property?
+                    if (strpos($docComments, '* @webservice.hidden') !== false) {
+                        continue;
+                    }
+
+                    // Deprecated?
+                    if (strpos($docComments, '* @deprecated') !== false) {
+                        $this->_wsdlStruct['class'][$className]['property'][$propertyName]['deprecated'] = true;
                     }
 
                     preg_match_all('~\* @var\s(\S+)~', $docComments, $var);
