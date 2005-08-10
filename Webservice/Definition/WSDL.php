@@ -446,6 +446,11 @@ class Services_Webservice_Definition_WSDL
         */
         $service = $this->_wsdl->createElement('service');
         $service->setAttribute('name', $this->classname);
+
+        $documentation = $this->_wsdl->createElement('documentation');
+        $documentation->appendChild($this->_wsdl->createTextNode($this->_parser->description));
+        $service->appendChild($documentation);
+
         $port = $this->_wsdl->createElement('port');
         $port->setAttribute('name', $this->classname . 'Port');
         $port->setAttribute('binding', 'typens:' . $this->classname . 'Binding');
