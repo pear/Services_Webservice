@@ -319,17 +319,20 @@ class Services_Webservice_Definition
                         continue;
                     }
 
+                    $_properties =& $this->_wsdlStruct['class'][$className]['property'][$propertyName];
+
                     // Deprecated?
                     if (strpos($docComments, '* @deprecated') !== false) {
-                        $this->_wsdlStruct['class'][$className]['property'][$propertyName]['deprecated'] = true;
+                        $_properties['deprecated'] = true;
                     }
+
+                    // Description
+                    $_properties['description'] = trim(substr($docComments, 0, strpos($docComments, '* @')), "\r\n\t *\0\x0B/");
 
                     preg_match_all('~\* @var\s(\S+)~', $docComments, $var);
 
                     $_cleanType = str_replace('[]', '', $var[1][0], $_length);
                     $_typens    = str_repeat('ArrayOf', $_length);
-
-                    $_properties =& $this->_wsdlStruct['class'][$className]['property'][$propertyName];
 
                     $_properties['type']     = $_cleanType;
                     $_properties['wsdltype'] = $_typens . $_cleanType;
@@ -392,9 +395,7 @@ class Services_Webservice_Definition
                 }
 
                 // Description
-                $docComments_Description = trim(substr($docComments, 0, strpos($docComments, '* @')), "\r\n\t *\0\x0B/");
-
-                $this->_wsdlStruct[$this->_classname]['method'][$methodName]['description'] = $docComments_Description;
+                $this->_wsdlStruct[$this->_classname]['method'][$methodName]['description'] = trim(substr($docComments, 0, strpos($docComments, '* @')), "\r\n\t *\0\x0B/");
 
                 // Params
                 preg_match_all('~@param\s(\S+)~', $docComments, $param);

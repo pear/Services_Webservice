@@ -103,6 +103,7 @@ h1 {
 
 dt {
     margin-top: 1em;
+    font-weight: bold;
 }
 
 .description {
@@ -126,6 +127,13 @@ li.deprecated {
 }
 span.deprecated {
     font-weight: bold;
+}
+.type {
+    font-family: Courier New, Courier, fixed;
+}
+dd ul {
+    margin-left: 0px;
+    padding-left: 0px;
 }
 ';
 
@@ -184,11 +192,38 @@ Your XML Web service should be identified by a namespace that you control. For e
 <p>For more details on XML namespaces, see the <acronym title="World Wide Web Consortium">W3C</acronym> recommendation on <a href="http://www.w3.org/TR/REC-xml-names/">Namespaces in XML</a>.<br />
 For more details on <acronym title="Web Service Description Language">WSDL</acronym>, see the <a href="http://www.w3.org/TR/wsdl">WSDL Specification</a>.<br />
 For more details on URIs, see <a href="http://www.ietf.org/rfc/rfc2396.txt"><acronym title="Request For Comment">RFC</acronym> 2396</a>.</p>
-<p><small>Powered by PEAR <a href="http://pear.php.net/">http://pear.php.net</a></small></p>
-</body>
-</html>';
+<p><small>Powered by PEAR <a href="http://pear.php.net/">http://pear.php.net</a></small></p>';
 
         }
+
+        if ($wsdlStruct['class']) {
+            $html .= '<h2>Complex Types Definitions</h2><dl>';
+            foreach ($wsdlStruct['class'] as $class => $properties) {
+                $html .= '<dt class="type">' . $class . '</dt><dd><ul class="properties">';
+                foreach ($properties['property'] as $propertyName => $property) {
+                    $html .= '<li' . ((empty($property['deprecated']))
+                                      ? ''
+                                      : ' class="deprecated"')
+                              . '><var class="property">' . $propertyName
+                              . '</var> <span class="type">'
+                              . $property['type']
+                              . ((!$property['array'])
+                                 ? ''
+                                 : str_repeat('[]', $property['length']))
+                              . '</span>'
+                              . ((empty($property['deprecated']))
+                                 ? ''
+                                 : '<br /><span class="description deprecated">This element is deprecated!</span>')
+                              . ((empty($property['description']))
+                                 ? ''
+                                 : '<br /><span class="description">' . htmlspecialchars($property['description']) . '</span>')
+                              . '</li>';
+                }
+                $html .= '</dd></ul>';
+            }
+            $html .= '</dl>';
+        }
+        $html .= '</body></html>';
 
         return $html;
     }
