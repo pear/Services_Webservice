@@ -324,7 +324,7 @@ class Services_Webservice_Definition_WSDL
                         ? 'xsd:' : 'typens:') . $methodVars['wsdltype']);
                     $messageInput->appendChild($part);
                 }
-                if (isset($methodVars['return'])) {
+                if (isset($methodVars['return']) && $methodVars['type']!='void') {
                     $part = $this->_wsdl->createElement('part');
                     $part->setAttribute('name', $methodName.'Response'); //$methodVars['wsdltype']);
                     $part->setAttribute('type', (($methodVars['array'] != 1 && $methodVars['class'] != 1)
