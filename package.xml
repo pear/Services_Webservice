@@ -17,7 +17,7 @@ This package helps you easily create web services (SOAP).
             <user>jausions</user>
             <name>Philippe Jausions</name>
             <email>Philippe.Jausions@11abacus.com</email>
-            <role>developer</role>
+            <role>lead</role>
         </maintainer>
         <maintainer>
             <user>mfonda</user>
@@ -29,10 +29,11 @@ This package helps you easily create web services (SOAP).
     <release>
         <version>0.5.0</version>
         <state>alpha</state>
-        <date>2005-07-27</date>
+        <date>2005-08-12</date>
         <notes>
 - Class restructuration.
-  New Services_Webservice_Definition helper class.
+  New Services_Webservice_Definition helper classes.
+- Exceptions are thrown if docblocks are missing for class, methods and properties declarations
         </notes>
         <filelist>
             <dir name="/" baseinstalldir="Services">

@@ -304,11 +304,11 @@ class Services_Webservice_Definition
             $this->_wsdlStruct['class'][$className]['property'] = array();
             for ($i = 0; $i < count($properties); ++$i) {
                 if ($properties[$i]->isPublic()) {
-                    $docComments = $properties[$i]->getDocComment();
+                    $docComments = trim($properties[$i]->getDocComment());
 
                     $propertyName = $properties[$i]->getName();
 
-                    if (!trim($docComments)) {
+                    if (!$docComments) {
                         throw new Services_Webservice_Definition_NoDocCommentException(
                             'Property ' . $class . '::' . $propertyName
                             . ' is missing docblock comment.');
@@ -327,7 +327,10 @@ class Services_Webservice_Definition
                     }
 
                     // Description
-                    $_properties['description'] = trim(substr($docComments, 0, strpos($docComments, '* @')), "\r\n\t *\0\x0B/");
+                    if (($endPos = strpos($docComments, '* @')) === false) {
+                        $endPos = strlen($docComments);
+                    }
+                    $_properties['description'] = trim(substr($docComments, 0, $endPos), "\r\n\t *\0\x0B/");
 
                     preg_match_all('~\* @var\s(\S+)~', $docComments, $var);
 
@@ -371,6 +374,16 @@ class Services_Webservice_Definition
     protected function classMethodsIntoStruct()
     {
         $class = new ReflectionClass($this->_classname);
+        $docComments = trim($class->getDocComment(), "\r\n\t *\0\x0B/");
+        if (!$docComments) {
+            throw new Services_Webservice_Definition_NoDocCommentException('Class ' . $this->_classname . ' is missing docblock comment.');
+        }
+
+        if (($endPos = strpos($docComments, '* @')) === false) {
+            $endPos = strlen($docComments);
+        }
+        $this->description = trim(substr($docComments, 0, $endPos), "\r\n\t *\0\x0B/");
+
         $methods = $class->getMethods();
 
         foreach ($methods as $method) {
@@ -395,7 +408,10 @@ class Services_Webservice_Definition
                 }
 
                 // Description
-                $this->_wsdlStruct[$this->_classname]['method'][$methodName]['description'] = trim(substr($docComments, 0, strpos($docComments, '* @')), "\r\n\t *\0\x0B/");
+                if (($endPos = strpos($docComments, '* @')) === false) {
+                    $endPos = strlen($docComments);
+                }
+                $this->_wsdlStruct[$this->_classname]['method'][$methodName]['description'] = trim(substr($docComments, 0, $endPos), "\r\n\t *\0\x0B/");
 
                 // Params
                 preg_match_all('~@param\s(\S+)~', $docComments, $param);

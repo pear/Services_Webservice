@@ -11,6 +11,9 @@ class myService extends Services_Webservice
     /**
     * This function prints out hello. We also added a DOM-node to the WSDL-file. portType-operation-documentation.
     *
+    * What about multiline comments?
+    *
+    *
     * @param int
     * @param string[][]
     * @param classB[][][]
@@ -33,7 +36,6 @@ class myService extends Services_Webservice
     }
 
     /**
-     * Tests system failures
     * @deprecated
      */
     public function failMe() {
