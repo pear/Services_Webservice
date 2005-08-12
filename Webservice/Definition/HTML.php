@@ -175,7 +175,7 @@ dd ul {
                     , implode(',', $returnValue)
                     , $methodName
                     , implode('</var> , <var class="parameter">', $paramValue)
-                    , ((empty($method['deprecated'])) ? '' : ('<br /><span class="description deprecated">This method is deprecated!</span>'))
+                    , ((empty($method['deprecated'])) ? '' : ('<br /><span class="description deprecated">This operation is deprecated!</span>'))
                     , ((empty($method['description'])) ? '' : ('<br /><span class="description">' . htmlspecialchars($method['description']) . '</span>')));
         }
         $html .= '</ul>
@@ -197,9 +197,9 @@ For more details on URIs, see <a href="http://www.ietf.org/rfc/rfc2396.txt"><acr
         }
 
         if ($wsdlStruct['class']) {
-            $html .= '<h2>Complex Types Definitions</h2><dl>';
+            $html .= '<h2>Complex Types Definitions</h2>';
             foreach ($wsdlStruct['class'] as $class => $properties) {
-                $html .= '<dt class="type">' . $class . '</dt><dd><ul class="properties">';
+                $html .= '<h3 class="type">' . $class . '</h3><ul class="properties">';
                 foreach ($properties['property'] as $propertyName => $property) {
                     $html .= '<li' . ((empty($property['deprecated']))
                                       ? ''
@@ -219,9 +219,8 @@ For more details on URIs, see <a href="http://www.ietf.org/rfc/rfc2396.txt"><acr
                                  : '<br /><span class="description">' . htmlspecialchars($property['description']) . '</span>')
                               . '</li>';
                 }
-                $html .= '</dd></ul>';
+                $html .= '</ul>';
             }
-            $html .= '</dl>';
         }
         $html .= '</body></html>';
 
