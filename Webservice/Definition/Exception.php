@@ -62,4 +62,18 @@ class Services_Webservice_Definition_DocCommentMismatchException extends Service
 {
 }
 
+/**
+ * Exception class for invalid docblock comment
+ */
+class Services_Webservice_Definition_InvalidDocCommentException extends Services_Webservice_Definition_Exception
+{
+}
+
+/**
+ * Exception class for incomplete docblock comment
+ */
+class Services_Webservice_Definition_IncompleteDocCommentException extends Services_Webservice_Definition_Exception
+{
+}
+
 ?>

@@ -68,10 +68,10 @@ class Services_Webservice_Definition_HTML
         $namespace  = $this->_parser->namespace;
         $classname  = $this->_parser->getClassName();
 
-        if (trim($this->_parser->description) == '') {
+        if (trim($wsdlStruct['service']['description']) == '') {
             $description = 'My example service description';
         } else {
-            $description = $this->_parser->description;
+            $description = $wsdlStruct['service']['description'];
         }
 
         if (!($urlWSDL = $this->_parser->getURI('WSDL'))) {

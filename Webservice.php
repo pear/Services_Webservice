@@ -46,14 +46,6 @@ abstract class Services_Webservice
     public $namespace;
 
     /**
-     * Description of the web service
-     *
-     * @var    string
-     * @access public
-     */
-    public $description;
-
-    /**
      * Protocol of the web service
      *
      * @var    string
@@ -81,17 +73,15 @@ abstract class Services_Webservice
      * Constructor
      *
      * @var    string  $namespace
-     * @var    string  $description
      * @var    array   $options
      * @access public
      */
-    public function __construct($namespace, $description, $options = null)
+    public function __construct($namespace, $options = null)
     {
         if (trim($namespace) == '') {
             $namespace = 'http://example.org/';
         }
         $this->namespace   = $namespace;
-        $this->description = $description;
         $this->soapServerOptions['uri'] = isset($options['uri']) ? $options['uri'] : $this->namespace;
         $this->soapServerOptions['encoding'] = isset($options['encoding']) ? $options['encoding'] : SOAP_ENCODED;
         $this->protocol = 'http';
@@ -130,7 +120,7 @@ abstract class Services_Webservice
         }
         if ($action) {
             require_once 'Services/Webservice/Definition.php';
-            $this->_wsdlWriter = new Services_Webservice_Definition($this->_classname, $this->namespace, $this->description);
+            $this->_wsdlWriter = new Services_Webservice_Definition($this->_classname, $this->namespace);
             $this->_wsdlWriter->protocol = $this->protocol;
             echo $this->_wsdlWriter->{'to' . $action}();
         } else {

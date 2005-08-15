@@ -31,9 +31,12 @@ This package helps you easily create web services (SOAP).
         <state>alpha</state>
         <date>2005-08-12</date>
         <notes>
-- Class restructuration.
-  New Services_Webservice_Definition helper classes.
-- Exceptions are thrown if docblocks are missing for class, methods and properties declarations
+- Package restructuration (New Services_Webservice_Definition helper classes.)
+
+BC Breaks:
+- Change in parameters for constructor!
+- $description is not public anymore
+- Exceptions are thrown if docblocks are missing, invalid or incomplete for class, methods and properties declarations
         </notes>
         <filelist>
             <dir name="/" baseinstalldir="Services">

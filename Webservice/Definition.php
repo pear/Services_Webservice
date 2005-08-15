@@ -56,9 +56,9 @@ class Services_Webservice_Definition
      * Description of the web service
      *
      * @var    string
-     * @access public
+     * @access protected
      */
-    public $description;
+    protected $description;
 
     /**
      * Simple WSDL types
@@ -108,12 +108,11 @@ class Services_Webservice_Definition
      *
      * @var    object|string  $class
      * @var    string         $namespace
-     * @var    string         $description
      * @var    array          $options not currently used
      * @access public
      * @throws Services_Webservice_Definition_NotClassException
      */
-    public function __construct($class, $namespace, $description, $options = null)
+    public function __construct($class, $namespace, $options = null)
     {
         if (is_object($class)) {
             $this->_classname = $class->get_class();
@@ -128,8 +127,6 @@ class Services_Webservice_Definition
         } else {
             $this->namespace = 'http://example.org/';
         }
-
-        $this->description = $description;
 
         $this->_wsdlStruct = array();
         $this->_hiddenMethods = array(
@@ -246,6 +243,7 @@ class Services_Webservice_Definition
      * @return string
      * @access public
      * @throws Services_Webservice_Definition_UnknownFormatException
+     * @throws Services_Webservice_Definition_Exception
      */
     public function __call($name, $arg)
     {
@@ -266,6 +264,7 @@ class Services_Webservice_Definition
      * Dispatches types
      *
      * @access protected
+     * @throws Services_Webservice_Definition_Exception
      */
     protected function classStructDispatch()
     {
@@ -295,6 +294,7 @@ class Services_Webservice_Definition
      * @var    string
      * @access private
      * @throws Services_Webservice_Definition_NoDocCommentException
+     * @throws Services_Webservice_Definition_IncompleteDocCommentException
      */
     protected function classPropertiesIntoStruct($className)
     {
@@ -304,37 +304,40 @@ class Services_Webservice_Definition
             $this->_wsdlStruct['class'][$className]['property'] = array();
             for ($i = 0; $i < count($properties); ++$i) {
                 if ($properties[$i]->isPublic()) {
-                    $docComments = trim($properties[$i]->getDocComment());
 
                     $propertyName = $properties[$i]->getName();
 
+                    try {
+                        $docComments = $this->_parseDocBlock($properties[$i]->getDocComment());
+                    } catch (Services_Webservice_Definition_Exception $e) {
+                        throw new Services_Webservice_Definition_Exception('Error in ' . $className . '::' . $propertyName . ' property docblock', $e);
+                    }
+
                     if (!$docComments) {
                         throw new Services_Webservice_Definition_NoDocCommentException(
-                            'Property ' . $class . '::' . $propertyName
-                            . ' is missing docblock comment.');
+                            'Empty or missing docblock comment for ' . $className . '::' . $propertyName . ' property.');
                     }
 
                     // Skip property?
-                    if (strpos($docComments, '* @webservice.hidden') !== false) {
+                    if (isset($docComments['webservice.hidden'])) {
                         continue;
                     }
 
                     $_properties =& $this->_wsdlStruct['class'][$className]['property'][$propertyName];
 
                     // Deprecated?
-                    if (strpos($docComments, '* @deprecated') !== false) {
+                    if (isset($docComments['deprecated'])) {
                         $_properties['deprecated'] = true;
                     }
 
                     // Description
-                    if (($endPos = strpos($docComments, '* @')) === false) {
-                        $endPos = strlen($docComments);
+                    $_properties['description'] = @$docComments['shortDescription'];
+
+                    if (!isset($docComments['var'])) {
+                        throw new Services_Webservice_Definition_IncompleteDocCommentException('@var missing in docblock comment for ' . $className . '::' . $propertyName . ' property.');
                     }
-                    $_properties['description'] = trim(substr($docComments, 0, $endPos), "\r\n\t *\0\x0B/");
-
-                    preg_match_all('~\* @var\s(\S+)~', $docComments, $var);
-
-                    $_cleanType = str_replace('[]', '', $var[1][0], $_length);
+                    $var = $docComments['var'];
+                    $_cleanType = str_replace('[]', '', $var[0][0], $_length);
                     $_typens    = str_repeat('ArrayOf', $_length);
 
                     $_properties['type']     = $_cleanType;
@@ -370,19 +373,19 @@ class Services_Webservice_Definition
      * @access protected
      * @throws Services_Webservice_Definition_NoDocCommentException
      * @throws Services_Webservice_Definition_DocCommentMismatchException
+     * @throws Services_Webservice_Definition_Exception
      */
     protected function classMethodsIntoStruct()
     {
         $class = new ReflectionClass($this->_classname);
-        $docComments = trim($class->getDocComment(), "\r\n\t *\0\x0B/");
+
+        $docComments = $this->_parseDocBlock($class->getDocComment());
+
         if (!$docComments) {
-            throw new Services_Webservice_Definition_NoDocCommentException('Class ' . $this->_classname . ' is missing docblock comment.');
+            throw new Services_Webservice_Definition_NoDocCommentException('Empty or missing docblock for ' . $this->_classname . ' class');
         }
 
-        if (($endPos = strpos($docComments, '* @')) === false) {
-            $endPos = strlen($docComments);
-        }
-        $this->description = trim(substr($docComments, 0, $endPos), "\r\n\t *\0\x0B/");
+        $this->_wsdlStruct['service']['description'] = $docComments['shortDescription'];
 
         $methods = $class->getMethods();
 
@@ -391,39 +394,47 @@ class Services_Webservice_Definition
             if ($method->isPublic()
                 && !in_array($methodName, $this->_hiddenMethods)) {
 
-                $docComments = trim($method->getDocComment());
+                try {
+                    $docComments = $this->_parseDocBlock($method->getDocComment());
+                } catch (Services_Webservice_Definition_Exception $e) {
+                    throw new Services_Webservice_Definition_Exception('Error in ' . $this->_classname . '::' . $methodName . '() docblock', $e);
+                }
 
                 if (!$docComments) {
-                    throw new Services_Webservice_Definition_NoDocCommentException('Method ' . $this->_classname . '::' . $methodName . '() is missing docblock comment.');
+                    throw new Services_Webservice_Definition_NoDocCommentException('empty or missing docblock for ' . $this->_classname . '::' . $methodName . '() method');
                 }
 
                 // Skip method?
-                if (strpos($docComments, '* @webservice.hidden') !== false) {
+                if (isset($docComments['webservice.hidden'])) {
                     continue;
                 }
 
                 // Deprecated?
-                if (strpos($docComments, '* @deprecated') !== false) {
+                if (isset($docComments['deprecated'])) {
                     $this->_wsdlStruct[$this->_classname]['method'][$methodName]['deprecated'] = true;
                 }
 
                 // Description
-                if (($endPos = strpos($docComments, '* @')) === false) {
-                    $endPos = strlen($docComments);
-                }
-                $this->_wsdlStruct[$this->_classname]['method'][$methodName]['description'] = trim(substr($docComments, 0, $endPos), "\r\n\t *\0\x0B/");
+                $this->_wsdlStruct[$this->_classname]['method'][$methodName]['description'] = @$docComments['shortDescription'];
 
                 // Params
-                preg_match_all('~@param\s(\S+)~', $docComments, $param);
+                $param = (array) @$docComments['param'];
                 $params = $method->getParameters();
-                if (count($params) !=  count($param[1])) {
+                if (count($params) !=  count($param)) {
                     throw new Services_Webservice_Definition_DocCommentMismatchException(
                         'Docblock comment doesn\'t match ' . $this->_classname
-                        . '::' . $methodName . '() signature.');
+                        . '::' . $methodName . '() signature');
                 }
                 for ($i = 0; $i < count($params); ++$i) {
-                    $_class = $params[$i]->getClass();
-                    $_type  = ($_class) ? $_class->getName() : $param[1][$i];
+                    // Type hint
+                    if ($_class = $params[$i]->getClass()) {
+                        $_type  = $_class->getName();
+                        if ($_type != $param[$i][0]) {
+                            throw new Services_Webservice_Definition_DocCommentMismatchException('Docblock comment doesn\'t match ' . $this->_classname . '::' . $methodName . '() type hints');
+                        }
+                    } else {
+                        $_type  = $param[$i][0];
+                    }
 
                     $_cleanType = str_replace('[]', '', $_type, $_length);
                     $_typens    = str_repeat('ArrayOf', $_length);
@@ -444,9 +455,8 @@ class Services_Webservice_Definition
                 }
 
                 // return
-                preg_match_all('~@return\s(\S+)~', $docComments, $return);
-                if (isset($return[1][0])) {
-                    $_cleanType = str_replace('[]', '', $return[1][0], $_length);
+                if ($return = @$docComments['return']) {
+                    $_cleanType = str_replace('[]', '', $return[0][0], $_length);
                 } else {
                     $_cleanType = 'void';
                     $_length = 0;
@@ -466,6 +476,89 @@ class Services_Webservice_Definition
                 $_var['return'] = true;
             }
         }
+    }
+
+    /**
+     * Parses a docblock comment
+     *
+     * @param string $comments
+     * @return array
+     * @access protected
+     * @throws Services_Webservice_Definition_InvalidDocCommentException
+     */
+    protected function _parseDocBlock($comments)
+    {
+        $comments  = explode("\n", $comments);
+
+        $info      = array();
+        $tag       = '';
+        $lastTag   = 0;
+        $shortDesc = array();
+        $longDesc  = '';
+        $inDesc    = 'short';
+
+        foreach ($comments as $line) {
+            $line = ltrim(trim($line), "/* \t");
+            if ($line && $line{0} == '@') {
+                $inDesc = false;
+                $line   = explode(' ', strtr($line, "\t", ' '), 2);
+                $tag    = substr(array_shift($line), 1);
+                $attr   = trim(@$line[0]);
+                switch ($tag) {
+                    case 'return':
+                    case 'var':
+                        if (isset($info[$tag])) {
+                            throw new Services_Webservice_Definition_InvalidDocCommentException('Only 1 @' . $tag . ' doctag allowed in docblock');
+                        }
+                        // No "break" here. This is intentional!
+                    case 'param':
+                        if (!$attr) {
+                            throw new Services_Webservice_Definition_InvalidDocCommentException('Incomplete @' . $tag . ' docblock tag');
+                        }
+                        $attr = explode(' ', $attr, 2);
+                        break;
+                }
+                $info[$tag][] = $attr;
+                $lastTag = count($info[$tag]) - 1;
+
+            } elseif ($inDesc) {
+                switch ($inDesc) {
+                    case 'short':
+                        if ($line == '' || $line == '.') {
+                            if ($shortDesc) {
+                                $inDesc = 'long';
+                            }
+                            continue 2;
+                        } elseif (count($shortDesc) < 3) {
+                            $shortDesc[] = $line;
+                            if (substr($line, -1) == '.') {
+                                $inDesc = 'long';
+                            }
+                            break;
+                        } else {
+                            $line = array_pop($shortDesc) . "\n" . $line;
+                            $line = array_pop($shortDesc) . "\n" . $line;
+                            $inDesc = 'long';
+                        }
+                        // No "break" here. This is intentional!
+                    case 'long':
+                        $longDesc .= $line . "\n";
+                        break;
+                }
+
+            } elseif ($line != '') {
+                // Multiline tag
+                $info[$tag][$lastTag] .= "\n" . $line;
+            }
+        }
+        if ($shortDesc) {
+            $info['shortDescription'] = implode("\n", $shortDesc);
+        }
+        if (trim($longDesc)) {
+            $info['longDescription'] = $longDesc;
+        }
+
+        return $info;
     }
 }
 
