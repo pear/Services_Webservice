@@ -31,18 +31,27 @@ This package helps you easily create web services (SOAP).
         <state>alpha</state>
         <date>2005-08-12</date>
         <notes>
-- Package restructuration (New Services_Webservice_Definition helper classes.)
+Package restructuration:
+ - New Services_Webservice_Definition helper classes,
+ - New factory() method,
+ - New backend driver-based service types (only SOAP for now.)
 
 BC Breaks:
 - Change in parameters for constructor!
-- $description is not public anymore
-- Exceptions are thrown if docblocks are missing, invalid or incomplete for class, methods and properties declarations
+- $description is not public anymore,
+- Exceptions are thrown if docblocks are missing, invalid or incomplete for class, methods and properties declarations,
+- Don't extend Service_Webservice base class anymore.
+
+Support for short and long description docblock.
+Extended info page with complex type definitions.
         </notes>
         <filelist>
             <dir name="/" baseinstalldir="Services">
                 <file role="php">Webservice.php</file>
                 <dir name="Webservice" role="php">
+	                <file role="php">Exception.php</file>
                     <file>Definition.php</file>
+                    <file>SOAP.php</file>
                     <dir name="Definition" role="php">
                         <file>Exception.php</file>
                         <file>DISCO.php</file>

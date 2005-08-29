@@ -3,7 +3,7 @@
 /* vim: set expandtab tabstop=4 shiftwidth=4: */
 
 /**
- * Easy Web Service (SOAP) creation
+ * Easy Web Service creation
  *
  * PHP 5
  *
@@ -35,7 +35,7 @@
  * @package Services_Webservices
  * @version @version@
  */
-abstract class Services_Webservice
+class Services_Webservice
 {
     /**
      * Namespace of the web service
@@ -54,95 +54,64 @@ abstract class Services_Webservice
     public $protocol;
 
     /**
-     * SOAP-server options of the web service
-     *
-     * @var    array
-     * @access public
-     */
-    public $soapServerOptions = array();
-
-    /**
      * Name of the class from which to create a web service from
      *
      * @var    string
-     * @access private
+     * @access protected
      */
-    private $_classname;
+    protected $_classname;
 
     /**
      * Constructor
      *
+     * @var    object|string  $class
      * @var    string  $namespace
      * @var    array   $options
-     * @access public
+     * @access protected
+     * @throws Services_Webservice_NotClassException
      */
-    public function __construct($namespace, $options = null)
+    protected function __construct($class, $namespace, $options = null)
     {
+        if (is_object($class)) {
+            $this->_classname = $class->get_class();
+        } elseif (is_string($class)) {
+            $this->_classname = $class;
+        } else {
+            throw new Services_Webservice_NotClassException(
+                'Expected a class name or instance.');
+        }
         if (trim($namespace) == '') {
             $namespace = 'http://example.org/';
         }
-        $this->namespace   = $namespace;
-        $this->soapServerOptions['uri'] = isset($options['uri']) ? $options['uri'] : $this->namespace;
-        $this->soapServerOptions['encoding'] = isset($options['encoding']) ? $options['encoding'] : SOAP_ENCODED;
-        $this->protocol = 'http';
-        $this->_classname = get_class($this);
+        $this->namespace  = $namespace;
+        $this->protocol   = 'http';
     }
 
     // }}}
     // {{{ handle()
     /**
-     * Automatically handles the incoming request
+     * Returns a Services_Webservice server instance to handle incoming
+     * requests.
      *
-     * The result depends on how the service was called
-     * If the query string is "WSDL" returns the WSDL document
-     * If the query string is "DISCO" returns the DISCO document
-     * If the payload is not empty, SOAP call is handled by the SOAP server
-     * Otherwise, returns an HTML information page
-     *
+     * @param  string  $driver backend service type (for now only SOAP)
+     * @var    object|string  $class
+     * @var    string  $namespace
+     * @var    array   $options
      * @access public
+     * @throws Services_Webservice_UnknownDriverException
+     * @throws Services_Webservice_NotClassException
      * @webservice.hidden
      */
-    public function handle()
+    public function &factory($driver, $class, $namespace, $options = null)
     {
-        $action = strtoupper($_SERVER['QUERY_STRING']);
-        switch ($action) {
-            case 'WSDL':
-            case 'DISCO':
-                header('Content-Type: text/xml');
-                break;
-            default:
-            	if (isset($_SERVER['HTTP_SOAPACTION'])) {
-                    $action = null;
-                } else {
-                    header('Content-Type: text/html');
-                    $action = 'HTML';
-                }
+        $backend = 'Services_Webservice_' . $driver;
+        include_once 'Services/Webservice/' . basename($driver) . '.php';
+        if (!class_exists($backend)) {
+            require_once 'Services/Webservice/Exception.php';
+            throw Services_Webservice_UnknownDriverException('Unknown backend driver: ' . $driver);
         }
-        if ($action) {
-            require_once 'Services/Webservice/Definition.php';
-            $this->_wsdlWriter = new Services_Webservice_Definition($this->_classname, $this->namespace);
-            $this->_wsdlWriter->protocol = $this->protocol;
-            echo $this->_wsdlWriter->{'to' . $action}();
-        } else {
-            $this->createServer();
-        }
-    }
-
-    // }}}
-    // {{{ createServer()
-    /**
-     * Creates the SOAP-server
-     *
-     * Creates the SOAP server using the PHP SOAP extension,
-     * and automatically handle the call.
-     *
-     * @access private
-     */
-    private function createServer()
-    {
-        $server = new SoapServer(null, $this->soapServerOptions);
-        $server->SetClass($this->_classname);
-        $server->handle();
+        $instance = new $backend($class, $namespace, $options);
+        return $instance;
     }
 }
 
