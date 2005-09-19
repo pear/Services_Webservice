@@ -81,7 +81,7 @@ class Services_Webservice_SOAP extends Services_Webservice
      */
     public function handle()
     {
-        $action = strtoupper($_SERVER['QUERY_STRING']);
+        $action = strtoupper(@$_SERVER['QUERY_STRING']);
         switch ($action) {
             case 'WSDL':
             case 'DISCO':
