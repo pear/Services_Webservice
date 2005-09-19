@@ -162,7 +162,7 @@ class Services_Webservice_Definition
     /**
      * Returns the structure of classes as parsed by intoStruct
      *
-     * @retirn array
+     * @return array
      * @access public
      */
     public function getStruct()
@@ -559,6 +559,53 @@ class Services_Webservice_Definition
         }
 
         return $info;
+    }
+
+    /**
+     * Checks if a given method is exposed for the web service
+     *
+     * @param  string   $methodName method name to check accessibility for
+     * @return boolean  TRUE if exposed, FALSE otherwise
+     * @access public
+     * @throws Services_Webservice_Definition_NoDocCommentException
+     * @throws Services_Webservice_Definition_Exception
+     */
+    public function isMethodExposed($methodName)
+    {
+        if ($this->_wsdlStruct) {
+            return isset($this->_wsdlStruct[$this->_classname][$methodName]);
+        }
+
+        if (in_array($methodName, $this->_hiddenMethods)) {
+            return false;
+        }
+
+        $class = new ReflectionClass($this->_classname);
+        if (!$class->hasMethod($methodName)) {
+            return false;
+        }
+        $method = $class->getMethod($methodName);
+
+        if (!$method->isPublic()) {
+            return false;
+        }
+
+        try {
+            $docComments = $this->_parseDocBlock($method->getDocComment());
+        } catch (Services_Webservice_Definition_Exception $e) {
+            throw new Services_Webservice_Definition_Exception('Error in ' . $this->_classname . '::' . $methodName . '() docblock', $e);
+        }
+
+        if (!$docComments) {
+            throw new Services_Webservice_Definition_NoDocCommentException('empty or missing docblock for ' . $this->_classname . '::' . $methodName . '() method');
+        }
+
+        // Skip method?
+        if (isset($docComments['webservice.hidden'])) {
+            return false;
+        }
+
+        return true;
     }
 }
 
