@@ -23,8 +23,6 @@
  * @link       http://pear.php.net/package/Services_Webservice
  */
 
-// {{{ abstract class Services_Webservice
-
 /**
  * PEAR::Services_Webservice
  *
@@ -35,7 +33,7 @@
  * @package Services_Webservices
  * @version @version@
  */
-class Services_Webservice
+abstract class Services_Webservice
 {
     /**
      * Namespace of the web service
@@ -62,12 +60,20 @@ class Services_Webservice
     protected $_classname;
 
     /**
+     * Class instance used by the web service
+     *
+     * @var    object
+     * @access protected
+     */
+    protected $_classnameInstance = null;
+
+    /**
      * Parameter for the user's web service class
      *
      * @var    array
      * @access protected
      */
-    protected $_initParams = array();
+    protected $_initParams = null;
 
     /**
      * Constructor
@@ -82,6 +88,7 @@ class Services_Webservice
     {
         if (is_object($class)) {
             $this->_classname = $class->get_class();
+            $this->_classnameInstance =& $class;
         } elseif (is_string($class)) {
             $this->_classname = $class;
         } else {
@@ -106,7 +113,6 @@ class Services_Webservice
      * @access public
      * @throws Services_Webservice_UnknownDriverException
      * @throws Services_Webservice_NotClassException
-     * @webservice.hidden
      */
     public function &factory($driver, $class, $namespace, $options = null)
     {
@@ -132,6 +138,15 @@ class Services_Webservice
     {
         $this->_initParams = func_get_args();
     }
+
+    /**
+     * Automatically handles the incoming request
+     *
+     * The result depends on how the service was called and which backend
+     * is used.
+     * @access public
+     */
+    abstract public function handle();
 }
 
 ?>

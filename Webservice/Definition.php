@@ -392,6 +392,9 @@ class Services_Webservice_Definition
         foreach ($methods as $method) {
             $methodName = $method->getName();
             if ($method->isPublic()
+                && !$method->isAbstract()
+                && !$method->isConstructor()
+                && !$method->isDestructor()
                 && !in_array($methodName, $this->_hiddenMethods)) {
 
                 try {
@@ -412,6 +415,11 @@ class Services_Webservice_Definition
                 // Deprecated?
                 if (isset($docComments['deprecated'])) {
                     $this->_wsdlStruct[$this->_classname]['method'][$methodName]['deprecated'] = true;
+                }
+
+                // Static?
+                if (isset($docComments['static']) || $method->isStatic()) {
+                    $this->_wsdlStruct[$this->_classname]['method'][$methodName]['static'] = true;
                 }
 
                 // Description
@@ -565,15 +573,21 @@ class Services_Webservice_Definition
      * Checks if a given method is exposed for the web service
      *
      * @param  string   $methodName method name to check accessibility for
+     * @param  boolean  &$isStatic  if method is exposed and is static, this
+     *                              by-reference variable will be set to TRUE.
      * @return boolean  TRUE if exposed, FALSE otherwise
      * @access public
      * @throws Services_Webservice_Definition_NoDocCommentException
      * @throws Services_Webservice_Definition_Exception
      */
-    public function isMethodExposed($methodName)
+    public function isMethodExposed($methodName, &$isStatic = null)
     {
         if ($this->_wsdlStruct) {
-            return isset($this->_wsdlStruct[$this->_classname][$methodName]);
+            if (isset($this->_wsdlStruct[$this->_classname][$methodName])) {
+                $isStatic = isset($this->_wsdlStruct[$this->_classname][$methodName]['static']);
+                return true;
+            }
+            return false;
         }
 
         if (in_array($methodName, $this->_hiddenMethods)) {
@@ -586,7 +600,10 @@ class Services_Webservice_Definition
         }
         $method = $class->getMethod($methodName);
 
-        if (!$method->isPublic()) {
+        if (!$method->isPublic()
+            || $method->isAbstract()
+            || $method->isConstructor()
+            || $method->isDestructor()) {
             return false;
         }
 
@@ -604,6 +621,8 @@ class Services_Webservice_Definition
         if (isset($docComments['webservice.hidden'])) {
             return false;
         }
+
+        $isStatic = $method->isStatic();
 
         return true;
     }

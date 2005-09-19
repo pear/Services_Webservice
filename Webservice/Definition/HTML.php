@@ -152,7 +152,7 @@ dd ul {
 <h1>' . $classname . '</h1>
 <p>' . htmlspecialchars($description) . '</p>
 </div>
-<p>The following operations are supported. For a formal definition, please review the <a href="' . $urlWSDL . '">Service Description</a>.</p>
+<p>The following operations are supported. For a formal <acronym title="Simple Object Access Protocol">SOAP</acronym> definition, please review the <a href="' . $urlWSDL . '">Service Description</a>.</p>
 <ul>';
 
         foreach ($wsdlStruct[$classname]['method'] as $methodName => $method) {

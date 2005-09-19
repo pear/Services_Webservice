@@ -28,8 +28,6 @@
  */
 require_once 'Services/Webservice.php';
 
-// {{{ abstract class Services_Webservice
-
 /**
  * Services_Webservice implementation for SOAP backend
  *
@@ -77,7 +75,6 @@ class Services_Webservice_SOAP extends Services_Webservice
      * Otherwise, returns an HTML information page
      *
      * @access public
-     * @webservice.hidden
      */
     public function handle()
     {
@@ -97,9 +94,9 @@ class Services_Webservice_SOAP extends Services_Webservice
         }
         if ($action) {
             require_once 'Services/Webservice/Definition.php';
-            $this->_wsdlWriter = new Services_Webservice_Definition($this->_classname, $this->namespace);
-            $this->_wsdlWriter->protocol = $this->protocol;
-            echo $this->_wsdlWriter->{'to' . $action}();
+            $definition = new Services_Webservice_Definition($this->_classname, $this->namespace);
+            $definition->protocol = $this->protocol;
+            echo $definition->{'to' . $action}();
         } else {
             $this->createServer();
         }

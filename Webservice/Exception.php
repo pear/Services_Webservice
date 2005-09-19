@@ -35,16 +35,23 @@ class Services_Webservice_Exception extends PEAR_Exception
 }
 
 /**
- * Exception calls for Invalid driver
+ * Exception class for Invalid driver
  */
 class Services_Webservice_UnknownDriverException extends Services_Webservice_Exception
 {
 }
 
 /**
- * Exception calls for Invalid class parameter for constructor/factory
+ * Exception class for Invalid class parameter for constructor/factory
  */
 class Services_Webservice_NotClassException extends Services_Webservice_Exception
+{
+}
+
+/**
+ * Exception class for call on methods that are not exposed to the web service or don't exist
+ */
+class Services_Webservice_IllegalCallException extends Services_Webservice_Exception
 {
 }
 

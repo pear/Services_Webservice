@@ -49,8 +49,10 @@ Extended info page with complex type definitions.
             <dir name="/" baseinstalldir="Services">
                 <file role="php">Webservice.php</file>
                 <dir name="Webservice" role="php">
-	                <file role="php">Exception.php</file>
+	                <file>Exception.php</file>
                     <file>Definition.php</file>
+                    <file>Common.php</file>
+                    <file>ReST.php</file>
                     <file>SOAP.php</file>
                     <dir name="Definition" role="php">
                         <file>Exception.php</file>
