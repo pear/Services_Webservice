@@ -23,6 +23,11 @@
  * @link       http://pear.php.net/package/Services_Webservice
  */
 
+/**
+ * Include parent class
+ */
+require_once 'Services/Webservice.php';
+
 // {{{ abstract class Services_Webservice
 
 /**
@@ -113,7 +118,9 @@ class Services_Webservice_SOAP extends Services_Webservice
     private function createServer()
     {
         $server = new SoapServer(null, $this->soapServerOptions);
-        $server->SetClass($this->_classname);
+        $params = $this->_initParams;
+        array_unshift($this->_classname, $params);
+        call_user_func_array(array(&$server, 'SetClass'), $params);
         $server->handle();
     }
 }

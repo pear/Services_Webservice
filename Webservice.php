@@ -62,6 +62,14 @@ class Services_Webservice
     protected $_classname;
 
     /**
+     * Parameter for the user's web service class
+     *
+     * @var    array
+     * @access protected
+     */
+    protected $_initParams = array();
+
+    /**
      * Constructor
      *
      * @var    object|string  $class
@@ -87,8 +95,6 @@ class Services_Webservice
         $this->protocol   = 'http';
     }
 
-    // }}}
-    // {{{ handle()
     /**
      * Returns a Services_Webservice server instance to handle incoming
      * requests.
@@ -112,6 +118,19 @@ class Services_Webservice
         }
         $instance = new $backend($class, $namespace, $options);
         return $instance;
+    }
+
+    /**
+     * Initializes web service
+     *
+     * The parameters passed to this method will be passed to your class
+     * constructor
+     *
+     * @access public
+     */
+    public function init()
+    {
+        $this->_initParams = func_get_args();
     }
 }
 
