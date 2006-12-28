@@ -867,5 +867,4 @@ For more details on URIs, see <a href="http://www.ietf.org/rfc/rfc2396.txt"><acr
         $this->wsdl_definitions->appendChild($service);
     }
 }
-
 ?>

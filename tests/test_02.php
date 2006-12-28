@@ -15,11 +15,11 @@ class myService extends Services_Webservice
 		return 'myString';
 	}
 }
-
+	
 $myService = new myService(
-	'myService',
-	'example webservice description',
-	array('uri' => 'myService', 'encoding' => SOAP_ENCODED,'soap_version' => SOAP_1_2)
+		'myService',
+		'example webservice description',
+		array('uri' => 'myService', 'encoding' => SOAP_ENCODED,'soap_version' => SOAP_1_2)
 );
-$myService->handle(); 
+$myService->handle();
 ?>

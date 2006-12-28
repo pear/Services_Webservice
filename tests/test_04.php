@@ -6,13 +6,18 @@ class myService extends Services_Webservice
 	/**
 	* Says "Hello!"
 	*
-	* @param int
-	* @return string
+	* @param int[]
+	* @return string[]
 	*/
-	public function hello($i )
+	public function hello($i)
 	{
-		//create some logic here
-		return 'myString';
+		$strArray = array();
+		$strArray[] = $i[0].'a';
+		$strArray[] = $i[1].'b';
+		$strArray[] = $i[2].'c';
+		$strArray[] = $i[3].'d';
+		$strArray[] = $i[4].'e';
+		return $strArray;
 	}
 }
 
@@ -21,6 +26,5 @@ $myService = new myService(
 	'example webservice description',
 	array('uri' => 'myService', 'encoding' => SOAP_ENCODED,'soap_version' => SOAP_1_2)
 );
-$myService->handle(); 
+$myService->handle();
 ?>
-
