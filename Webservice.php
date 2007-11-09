@@ -1,8 +1,4 @@
 <?php
-
-ini_set('error_reporting',E_ALL);
-ini_set('error_log','/var/www/error.log');
-
 /* vim: set expandtab tabstop=4 shiftwidth=4: */
 
 /**
@@ -196,7 +192,7 @@ abstract class Services_Webservice
             '__construct',
             '__destruct',
             'handle');
-        $this->protocol = 'http';
+	$this->protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') ? 'https' : 'http';
     }
 
     // }}}
@@ -401,10 +397,10 @@ Your XML Web service should be identified by a namespace that you control. For e
 For more details on <acronym title="Web Service Description Language">WSDL</acronym>, see the <a href="http://www.w3.org/TR/wsdl">WSDL Specification</a>.<br />
 For more details on URIs, see <a href="http://www.ietf.org/rfc/rfc2396.txt"><acronym title="Request For Comment">RFC</acronym> 2396</a>.</p>
 <p><small>Powered by PEAR <a href="http://pear.php.net/">http://pear.php.net</a></small></p>
-</body>
-</html>';
+';
 
         }
+echo '</body></html>';
     }
 
     // }}}

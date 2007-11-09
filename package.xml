@@ -20,8 +20,8 @@
   </maintainers>
   <license>PHP License</license>
   <release>
-    <version>0.5.1</version>
-    <date>2006-12-31</date>
+    <version>0.5.2</version>
+    <date>2007-11-08</date>
     <state>beta</state>
     <notes>- fix package.xml</notes>
     <filelist>
