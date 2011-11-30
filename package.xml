@@ -25,7 +25,7 @@
     <state>beta</state>
     <notes>- fix package.xml</notes>
     <filelist>
-      <file role="php" baseinstalldir="Services" name="Webservice.php"/>
+      <file role="php" baseinstalldir="/" name="Services/Webservice.php"/>
       <file role="test" baseinstalldir="Services/Webservice" name="tests/test_01.php"/>
       <file role="test" baseinstalldir="Services/Webservice" name="tests/test_02.php"/>
       <file role="test" baseinstalldir="Services/Webservice" name="tests/test_03.php"/>
