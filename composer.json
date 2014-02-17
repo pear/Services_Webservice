@@ -1,0 +1,36 @@
+{
+    "authors": [
+        {
+            "email": "crafics@php.net",
+            "name": "Manfred Weber",
+            "role": "Lead"
+        },
+        {
+            "email": "Philippe.Jausions@11abacus.com",
+            "name": "Philippe Jausions",
+            "role": "Developer"
+        }
+    ],
+    "autoload": {
+        "psr-0": {
+            "Services_Webservice": "./"
+        }
+    },
+    "description": "More info available on: http://pear.php.net/package/Services_Webservice",
+    "include-path": [
+        "./"
+    ],
+    "license": "PHP License",
+    "name": "pear/services_webservice",
+    "support": {
+        "issues": "http://pear.php.net/bugs/search.php?cmd=display&package_name[]=Services_Webservice",
+        "source": "https://github.com/pear/Services_Webservice"
+    },
+    "type": "library",
+    "require": {
+        "pear/pear_exception": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "*"
+    }
+}
